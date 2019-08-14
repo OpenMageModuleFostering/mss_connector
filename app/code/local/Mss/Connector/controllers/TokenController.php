@@ -286,7 +286,7 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
               					   ->count();		
               		$android_count =  Mage::getModel('pushnotification/pushnotification')->getCollection()
               					   ->addFieldToFilter('create_date',$prev_date)
-              					   ->addFieldToFilter('device_type','1')
+              					   ->addFieldToFilter('device_type','0')
               					   ->count();	               			  
                    	$array['status'] = true;
                    	$array['date'] = $prev_date;

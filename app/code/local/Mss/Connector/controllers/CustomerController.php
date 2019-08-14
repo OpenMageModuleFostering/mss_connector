@@ -136,10 +136,10 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			$customer->setIsSubscribed ( 1 );
 		}
 		if( (null==Mage::app ()->getRequest ()->getParam ('password') ) || (null==Mage::app ()->getRequest ()->getParam ('email')) ){
-			echo json_encode ( array (
-					false,
-					$this->__('empty password or email.')
-			) );
+				$array = array();
+				$array['status']= false;
+				$array['message']= 'empty password or email.';
+				echo json_encode ($array);
 			return ;
 		}
 		$customer->getGroupId ();
