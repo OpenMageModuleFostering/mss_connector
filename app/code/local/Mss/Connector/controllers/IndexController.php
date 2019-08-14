@@ -211,8 +211,8 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 								
 								$price = explode(',',$filter[0]);
 								$price_filter = array('gt'=>$price['0'],'lt'=>$price['1']);
-								$collection = $collection->addAttributeToFilter ( 'price', array ('gt' => $price['0'] ) );
-								$collection = $collection->addAttributeToFilter ( 'price', array ('lt' => $price['1']) );
+								/*$collection = $collection->addAttributeToFilter ( 'price', array ('gt' => $price['0'] ) );
+								$collection = $collection->addAttributeToFilter ( 'price', array ('lt' => $price['1']) );*/
 							else:
 								$collection = $collection->addAttributeToFilter ( $key, array('in' => $filter) );
 							endif;
@@ -741,11 +741,6 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 		endif;
 
 	}
-
-
-
-
-
 
 	public function getsaleproducts()
 	{

@@ -78,44 +78,16 @@
                     <show_in_default>1</show_in_default>
                     <show_in_website>1</show_in_website>
                     <show_in_store>1</show_in_store>
-                    <fields>
-                    
-                        <about_us_page translate="label">
-                            <label>About Us</label>
-                           <frontend_type>select</frontend_type>
+                      <fields>
+                         <about_us_page translate="label">
+                            <label>Multi Select CMS Pages</label>
+                           <frontend_type>multiselect</frontend_type>
                             <sort_order>2</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                             <source_model>adminhtml/system_config_source_cms_page</source_model>
                         </about_us_page>
-                        <term_condition_page translate="label">
-                            <label>Term And Condition </label>
-                           <frontend_type>select</frontend_type>
-                            <sort_order>3</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <source_model>adminhtml/system_config_source_cms_page</source_model>
-                        </term_condition_page>
-                         <privacy_policy_page translate="label">
-                            <label>Privacy Policy </label>
-                           <frontend_type>select</frontend_type>
-                            <sort_order>4</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <source_model>adminhtml/system_config_source_cms_page</source_model>
-                        </privacy_policy_page>
-                         <return_privacy_policy_page translate="label">
-                            <label>Return Policy </label>
-                           <frontend_type>select</frontend_type>
-                            <sort_order>5</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <source_model>adminhtml/system_config_source_cms_page</source_model>
-                        </return_privacy_policy_page>
                     </fields>
                 </mss_config_group>
 

@@ -31,16 +31,14 @@ class Mss_Bannersliderapp_Block_Adminhtml_Bannersliderapp_Edit_Tab_Form extends 
          $fieldset->addField('order_banner', 'text',
                 array(
                     'label' => Mage::helper('bannersliderapp')->__('Order'),
-                   
-                    
                     
                     'name' => 'order_banner',
              ));
-        $fieldset->addField('url_type', 'select',
+      $fieldset->addField('url_type', 'select',
                          array(
-                          'label' => Mage::helper('bannersliderapp')->__('Link With Type'),
-                           'values'    => array(
-                              
+                            'label' => Mage::helper('bannersliderapp')->__('Link To'),
+                            'after_element_html' => '<small>Add catagory link section</small>',
+                            'values'    => array(
 
                               array(
                                   'value'     => 'Category',
@@ -54,6 +52,24 @@ class Mss_Bannersliderapp_Block_Adminhtml_Bannersliderapp_Edit_Tab_Form extends 
                           
                           'name' => 'url_type',
                       ));
+/*custom field*/
+           $fieldset->addField('check_type', 'select',
+                         array(
+                          'label' => Mage::helper('bannersliderapp')->__('Display on page'),
+                           'values'    => array(
+                              array(
+                                  'value'     => 'home_view',
+                                  'label'     => Mage::helper('core')->__('Home View'),
+                              ),
+                              array(
+                                  'value'     => 'category_view',
+                                  'label'     => Mage::helper('core')->__('Category View'),
+                              ),
+                          ),
+                          
+                          'name' => 'check_type',
+                      ));
+/*custom field*/
 
         $fieldset->addField('product_id', 'text',
                   array(

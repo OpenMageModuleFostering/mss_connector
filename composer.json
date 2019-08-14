@@ -1,7 +1,7 @@
 {
     "name": "OpenMageModuleFostering/Mss_Connector",
     "type": "magento-module",
-    "license": "OSLv1.0",
+    "license": "OSL-v1.0",
     "homepage": "",
     "description": "Mobile Multi store app for Android and Iphone",
     "authors": [

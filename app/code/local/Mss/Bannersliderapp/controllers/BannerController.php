@@ -24,7 +24,6 @@ class Mss_Bannersliderapp_BannerController extends Mage_Core_Controller_Front_Ac
 			
 			$alldata = array(); 
 			foreach($bannerCollection->getData() as $bannerdata){
-
 				 				
 					$path = Mage::helper('bannersliderapp')->reImageName( $bannerdata['image']);
 
@@ -38,6 +37,7 @@ class Mss_Bannersliderapp_BannerController extends Mage_Core_Controller_Front_Ac
 					$data['link_type'] = $bannerdata['url_type'];
 					$data['product_id'] = $bannerdata['product_id'];
 					$data['category_id'] = $bannerdata['category_id'];
+					$data['check_type'] = $bannerdata['check_type'];
 						
                     $alldata[] = $data; 
 			

@@ -57,6 +57,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		if (Mage::getSingleton ( 'customer/session' )->isLoggedIn()) {
 			$customer = Mage::getSingleton ( 'customer/session' )->getCustomer ();
 			$storeUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA); 
+			Mage::getSingleton('checkout/session')->setCustomer(Mage::getSingleton('customer/session')->getCustomer());
 			
 			$customerinfo = array (
 					'id'=>$customer->getId(),

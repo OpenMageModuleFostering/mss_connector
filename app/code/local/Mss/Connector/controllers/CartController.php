@@ -437,84 +437,90 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 
 	public function postCouponAction() {
-		$couponCode = ( string ) Mage::app ()->getRequest ()->getParam ( 'coupon_code' );
-		$cart = Mage::helper ( 'checkout/cart' )->getCart ();
+        $couponCode = ( string ) Mage::app ()->getRequest ()->getParam ( 'coupon_code' );
+        $cart = Mage::helper ( 'checkout/cart' )->getCart ();
 
-		$coupan_codes = array();  
-			$rulesCollection = Mage::getModel('salesrule/rule')->getCollection();
-			foreach($rulesCollection as $rule){
-			    $coupan_codes[] = $rule->getCode();			    
-			}
+        $coupan_codes = array();  
+            $rulesCollection = Mage::getModel('salesrule/rule')->getCollection();
+            foreach($rulesCollection as $rule){
+                $coupan_codes[] = $rule->getCode();                
+            }
 
-			if (!in_array($couponCode, $coupan_codes))
-			  {
-					  echo json_encode ( array (
-							'status' => 'error',
-							'message' => $this->__("Coupon code  is not Valid" ) 
-					  ));
-					return false;
-			  }
-		
-
-
-		
-		if (! $cart->getItemsCount ()) {
-			echo json_encode ( array (
-					'status' => 'error',
-					'message' => $this->__("You can't use coupon code with an empty shopping cart" 
-			) ));
-			return false;
-		}
-		if (Mage::app ()->getRequest ()->getParam ( 'remove' ) == 1) {
-			$couponCode = '';
-		}
-		$oldCouponCode = $cart->getQuote ()->getCouponCode ();
-		if (! strlen ( $couponCode ) && ! strlen ( $oldCouponCode )) {
-			echo json_encode ( array (
-					'status' => 'error',
-					'message' => "Emptyed." 
-			) );
-			return false;
-		}
-		try {
-			$codeLength = strlen ( $couponCode );
-			$isCodeLengthValid = $codeLength && $codeLength <= Mage_Checkout_Helper_Cart::COUPON_CODE_MAX_LENGTH;
-			
-			$cart->getQuote ()->getShippingAddress ()->setCollectShippingRates ( true );
-			$cart->getQuote ()->setCouponCode ( $isCodeLengthValid ? $couponCode : '' )->collectTotals ()->save ();
-			
-			if ($codeLength) {
-				if ($isCodeLengthValid && $couponCode == $cart->getQuote ()->getCouponCode ()) {
-					$messages = array (
-							'status' => 'true',
-							'message' => $this->__ ( 'Coupon code "%s" was applied.', Mage::helper ( 'core' )->escapeHtml ( $couponCode ) ) 
-					);
-				} else {
-					$messages = array (
-							'status' => 'error',
-							'message' => $this->__ ( 'Coupon code "%s" is not valid.', Mage::helper ( 'core' )->escapeHtml ( $couponCode ) ) 
-					);
-				}
-			} else {
-				$messages = array (
-						'status' => 'error',
-						'message' => $this->__ ( 'Coupon code was canceled.' ) 
-				);
-			}
-		} catch ( Mage_Core_Exception $e ) {
-			$messages = array (
-					'status' => 'error',
-					'message' => $e->getMessage () 
-			);
-		} catch ( Exception $e ) {
-			$messages = array (
-					'status' => 'error',
-					'message' => $this->__ ( 'Cannot apply the coupon code.' ) 
-			);
-		}
-		
-		echo json_encode ( $this->_getCartTotal ()  );
-	}
+            if (!in_array($couponCode, $coupan_codes))
+              {
+                      echo json_encode ( array (
+                            'status' => 'error',
+                            'message' => $this->__("Coupon code  is not Valid" )
+                      ));
+                    return false;
+              }
+        
+        if (! $cart->getItemsCount ()) {
+            echo json_encode ( array (
+                    'status' => 'error',
+                    'message' => $this->__("You can't use coupon code with an empty shopping cart"
+            ) ));
+            return false;
+        }
+        if (Mage::app ()->getRequest ()->getParam ( 'remove' ) == 1) {
+            $couponCode = '';
+        }
+        $oldCouponCode = $cart->getQuote ()->getCouponCode ();
+        if (! strlen ( $couponCode ) && ! strlen ( $oldCouponCode )) {
+            echo json_encode ( array (
+                    'status' => 'error',
+                    'message' => "Emptyed."
+            ) );
+            return false;
+        }
+        try {
+            $codeLength = strlen ( $couponCode );
+            $isCodeLengthValid = $codeLength && $codeLength <= Mage_Checkout_Helper_Cart::COUPON_CODE_MAX_LENGTH;
+            
+            $cart->getQuote ()->getShippingAddress ()->setCollectShippingRates ( true );
+            $cart->getQuote ()->setCouponCode ( $isCodeLengthValid ? $couponCode : '' )->collectTotals ()->save ();
+            
+            if ($codeLength) {
+                if ($isCodeLengthValid && $couponCode == $cart->getQuote ()->getCouponCode ()) {
+                    $messages = array (
+                            'status' => 'true',
+                            'message' => $this->__ ( 'Coupon code "%s" was applied.', Mage::helper ( 'core' )->escapeHtml ( $couponCode ) )
+                    );
+                } else {
+                    $messages = array (
+                            'status' => 'error',
+                            'message' => $this->__ ( 'Coupon code "%s" is not valid.', Mage::helper ( 'core' )->escapeHtml ( $couponCode ) )
+                    );
+                }
+            } else {
+                $messages = array (
+                        'status' => 'error',
+                        'message' => $this->__ ( 'Coupon code was canceled.' )
+                );
+            }
+        } catch ( Mage_Core_Exception $e ) {
+            $messages = array (
+                    'status' => 'error',
+                    'message' => $e->getMessage ()
+            );
+        } catch ( Exception $e ) {
+            $messages = array (
+                    'status' => 'error',
+                    'message' => $this->__ ( 'Cannot apply the coupon code.' )
+            );
+        }
+        $return  = $this->_getCartTotal ();
+        if($return['coupon_code']){
+            
+            echo json_encode ( $return);
+        }else{
+            $messages = array (
+                            'status' => 'error',
+                            'message' => $this->__ ( 'Coupon code "%s" is not valid.', Mage::helper ( 'core' )->escapeHtml ( $couponCode ) )
+                    );
+            echo json_encode($messages);
+        }
+    }
 
 
 
@@ -602,35 +608,35 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	}
 
 
-	protected function _getCartTotal() {
-		$cart = Mage::getSingleton ( 'checkout/cart' );
-		$totalItemsInCart = Mage::helper ( 'checkout/cart' )->getItemsCount (); // total items in cart
-		$totals = Mage::getSingleton ( 'checkout/session' )->getQuote ()->getTotals (); // Total object
-		$oldCouponCode = $cart->getQuote ()->getCouponCode ();
-		$oCoupon = Mage::getModel ( 'salesrule/coupon' )->load ( $oldCouponCode, 'code' );
-		$oRule = Mage::getModel ( 'salesrule/rule' )->load ( $oCoupon->getRuleId () );
-		
-		$subtotal = round ( $totals ["subtotal"]->getValue () ); // Subtotal value
-		$grandtotal = round ( $totals ["grand_total"]->getValue () ); // Grandtotal value
-		if (isset ( $totals ['discount'] )) { // $totals['discount']->getValue()) {
-			$discount = round ( $totals ['discount']->getValue () ); // Discount value if applied
-		} else {
-			$discount = '0';
-		}
-		if (isset ( $totals ['tax'] )) { // $totals['tax']->getValue()) {
-			$tax = round ( $totals ['tax']->getValue () ); // Tax value if present
-		} else {
-			$tax = '';
-		}
-		return array (
-				'subtotal' => $subtotal,
-				'grandtotal' => $grandtotal,
-				'discount' => str_replace('-','',$discount),
-				'tax' => $tax,
-				'coupon_code' => $oldCouponCode,
-				'coupon_rule' => $oRule->getData () 
-		);
-	}
+    protected function _getCartTotal() {
+        $cart = Mage::getSingleton ( 'checkout/cart' );
+        $totalItemsInCart = Mage::helper ( 'checkout/cart' )->getItemsCount (); // total items in cart
+        $totals = Mage::getSingleton ( 'checkout/session' )->getQuote ()->getTotals (); // Total object
+        $oldCouponCode = $cart->getQuote ()->getCouponCode ();
+        $oCoupon = Mage::getModel ( 'salesrule/coupon' )->load ( $oldCouponCode, 'code' );
+        $oRule = Mage::getModel ( 'salesrule/rule' )->load ( $oCoupon->getRuleId () );
+        
+        $subtotal =  number_format ( $totals ["subtotal"]->getValue (), 2, '.', '' ); // Subtotal value
+        $grandtotal =  number_format ( $totals ["grand_total"]->getValue (), 2, '.', '' ); // Grandtotal value
+        if (isset ( $totals ['discount'] )) { // $totals['discount']->getValue()) {
+            $discount =  number_format ( $totals ['discount']->getValue (), 2, '.', '' ); // Discount value if applied
+        } else {
+            $discount = '0';
+        }
+        if (isset ( $totals ['tax'] )) { // $totals['tax']->getValue()) {
+            $tax =  number_format ( $totals ['tax']->getValue (), 2, '.', '' ); // Tax value if present
+        } else {
+            $tax = '';
+        }
+        return array (
+                'subtotal' => $subtotal,
+                'grandtotal' => $grandtotal,
+                'discount' => str_replace('-','',$discount),
+                'tax' => $tax,
+                'coupon_code' => $oldCouponCode,
+                'coupon_rule' => $oRule->getData ()
+        );
+    }
 
 
 	protected function _getMessage() {
@@ -862,34 +868,39 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	
 	
 	####get all enabled shipping methods
-	public function getshippingmethodsAction(){ 
-    	$shipMethods = array();
-		$country = $this->getRequest()->getParam('country_id');
+	public function getshippingmethodsAction(){
+        $shipMethods = array();
+        $country = $this->getRequest()->getParam('country_id');
+        $zipcode = $this->getRequest()->getParam('zipcode');
+        $region_id = $this->getRequest()->getParam('region_id');
 
-			if (!Zend_Validate::is($country, 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=> $this->__('country id should not be empty')));
-						exit;
-				endif;
-		$cart = Mage::getSingleton('checkout/cart');
-		$address = $cart->getQuote()->getShippingAddress();
-		$address->setCountryId($country)
-		        ->setCollectShippingrates(true);
-		$cart->save();
 
-		$rates = $address->collectShippingRates()
+            if (!Zend_Validate::is($country, 'NotEmpty')):
+                    echo json_encode(array('status'=>'error','message'=> $this->__('country id should not be empty')));
+                        exit;
+                endif;
+        $cart = Mage::getSingleton('checkout/cart');
+        $address = $cart->getQuote()->getShippingAddress();
+        $address->setCountryId($country)
+                ->setPostcode($zipcode)
+                ->setRegionId($region_id)
+                ->setCollectShippingrates(true);
+        $cart->save();
+
+        $rates = $address->collectShippingRates()
                  ->getGroupedAllShippingRates();
 
-		foreach ($rates as $carrier) {
-		    foreach ($carrier as $rate) {
+        foreach ($rates as $carrier) {
+            foreach ($carrier as $rate) {
 
-		    	$shipMethods[] =array('code'=>$rate->getData('code'),
-		    						  'value'=>$rate->getData('carrier_title'),
-		    		                  'price'=>$rate->getData('price')
-					    		);
-		    }
-		}
-		    echo json_encode($shipMethods);
-	}
+                $shipMethods[] =array('code'=>$rate->getData('code'),
+                                      'value'=>$rate->getData('carrier_title'),
+                                      'price'=>$rate->getData('price')
+                                );
+            }
+        }
+            echo json_encode($shipMethods);
+    }
 
 	
 	####get all payment methods  for now only paypal and cod
@@ -1607,6 +1618,25 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		    exit;
 		endif;	
 	}
+
+/*Remove coupon code api from cart start*/
+
+    public function   deleteCouponAction(){
+        $custom_data = (string) Mage::app()->getRequest()->getParam('coupon_code');
+        $cart = Mage::helper ( 'checkout/cart' )->getCart ();
+        $applyCode = $cart->getQuote ()->getCouponCode ();
+        if($custom_data == $applyCode):
+        $carts = Mage::getSingleton('checkout/cart')->getQuote()->setCouponCode(' ')->collectTotals()->save();
+        $product['subtotal'] = $carts->getSubtotal();
+          $product['grandtotal'] = $carts->getGrandTotal();
+          $product['totalitems'] = $carts->getItemsCount();
+        $product['symbol'] = Mage::helper('connector')->getCurrencysymbolByCode($this->currency);
+            echo json_encode(array('status'=>"success",'message'=> $product));
+        else:
+            echo json_encode(array('status'=>"error",'message'=> 'Coupon code missmatch'));
+        endif;
+    }
+/*Remove coupon code api from cart end*/
 
 
 } 

@@ -534,35 +534,6 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 	###Getting price range 
 
 
-	public function getpricerange()
-	{
-		
-		
-		$maincategoryId=2;
-
-		$pricerange =array();	
-		$layer = Mage::getModel('catalog/layer');
-		$category = Mage::getModel('catalog/category')->load($maincategoryId);
-		if ($category->getId()) {
-					$origCategory = $layer->getCurrentCategory();
-					$layer->setCurrentCategory($category);
-		}
-		$r=Mage::getModel('catalog/layer_filter_price')
-		->setLayer($layer);
-
-		$range = $r->getPriceRange();
-		$dbRanges = $r->getRangeItemCounts($range);
-		$data = array();
-
-		foreach ($dbRanges as $index=>$count) {
-		$data[] = array(
-		'label' => $this->_renderItemLabel($range, $index),
-		'value' => $this->_renderItemValue($range, $index),
-		'count' => $count,
-		);
-		}
-		return $data;
-	}
 
 
 	public function _renderItemLabel($range, $value)
@@ -669,45 +640,81 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 	}
 
 
-	/*getFilter API*/
-	/*
-	 URL : baseurl/restapi/products/getFilters
-	 Name : getFilters
-	 Method : GET
-	 Response : JSON
-	*/
+    public function getpricerange($maincategoryId) {
+        $pricerange =array();   
+        $layer = Mage::getModel('catalog/layer');
+        $category = Mage::getModel('catalog/category')->load($maincategoryId);
+        if ($category->getId()) {
+                    $origCategory = $layer->getCurrentCategory();
+                    $layer->setCurrentCategory($category);
+        }
+        $r=Mage::getModel('catalog/layer_filter_price')
+        ->setLayer($layer);
+
+        $range = $r->getPriceRange();
+        $dbRanges = $r->getRangeItemCounts($range);
+        $data = array();
+
+        foreach ($dbRanges as $index=>$count) {
+        $data[] = array(
+        'label' => $this->_renderItemLabel($range, $index),
+        'value' => $this->_renderItemValue($range, $index),
+        'count' => $count,
+        );
+        }
+        return $data;
+    }
+
+
+
 	public function getFiltersAction(){
 
-		try{
-			$collection = Mage::getResourceModel('catalog/product_attribute_collection');
-		    $collection
-		        ->setItemObjectClass('catalog/resource_eav_attribute')
-		        ->setOrder('position', 'ASC');
-		    $collection->addIsFilterableFilter();
-		    $result = array();
-		    foreach ($collection as $attribute) {
+          $catId = Mage::app()->getRequest()->getParam('categoryid');
+      
+        if(empty($catId)):
+            echo  json_encode(array('status'=> false,'message'=>'Category id field is not empty'));
+        else:
+        try{
+            $json = array();
+            $layer = Mage::getModel("catalog/layer");
+            $category = Mage::getModel("catalog/category")->load($catId); // 3rd Category
+            $categories = $category->getChildrenCategories();
+            $counts = array();
+            foreach ($categories as $key => $value) {
+                $counts[] =array('subcategory'=> $value->getName() , 'url'=> $value->getUrl() , 'catId'=> $value->getId());
 
-		        $name=$attribute->getData('attribute_code');
-		        $attributeInfo = Mage::getResourceModel('eav/entity_attribute_collection')->setCodeFilter($name)->getFirstItem();
-		        $attributeId = $attributeInfo->getAttributeId();
-		        $attribute = Mage::getModel('catalog/resource_eav_attribute')->load($attributeId);
-		        $attributeOptions = $attribute ->getSource()->getAllOptions(false); 
-		       	
-			       	if($attribute->getAttributeCode() == 'price')
-			       		$result[] = array('code' => $attribute->getAttributeCode(), 'label'=>$attribute->getFrontendLabel(),'value'=>$this->getpricerange());
-			       	else
-			       		if($attributeOptions)
-			        		$result[] = array('code' => $attribute->getAttributeCode(), 'label'=>$attribute->getFrontendLabel(),'value'=>$attributeOptions);
-			    
-		    }
+            }
 
-		  echo json_encode($result);
-		}
-		catch(exception $e){
+            $json['category'] = $counts?$counts:null;
 
-			echo json_encode(array('status'=>'error','message'=> $this->__('Server side error %s',$e->getMessage())));
-		}
-	}
+            
+            $layer->setCurrentCategory($category);
+            $attributes = $layer->getFilterableAttributes();
+            foreach ($attributes as $attribute) {
+                $filterBlockName = 'catalog/layer_filter_attribute';
+                $result = Mage::app()->getLayout()->createBlock($filterBlockName)->setLayer($layer)->setAttributeModel($attribute)->init();
+                foreach($result->getItems() as $option) {
+                    $count[] = array('code' => $option->getLabel(),'label' => $option->getValue());
+                }
+
+                if($attribute->getAttributeCode() == 'price')
+                        $filters[] = array('code' => $attribute->getAttributeCode(), 'label'=>$attribute->getFrontendLabel(),'value'=>$this->getpricerange($catId));
+                
+                if($count!=null AND $attribute->getAttributeCode() != 'price')
+                        $filters[] = array('code'=>ucfirst($attribute->getAttributeCode()), 'label'=>$attribute->getFrontendLabel(),'value'=>$count);
+                /*if($count!=null){
+                    $json[] = array('code'=>ucfirst($attribute->getAttributeCode()), 'label'=>$attribute->getFrontendLabel(),'value'=>$count,'category'=>$counts,'price'=>$array);
+                }*/
+                unset($count,$array);
+            }
+            $json['filters'] = $filters;
+        }
+        catch (Exception $e) {
+            $json = array('status' => false, 'message' => $e->getMessage());
+        }
+        echo json_encode(array($json));
+        endif;
+     }
 
 	/*getFilter API*/
 
@@ -801,5 +808,30 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 		echo json_encode($productdetail);
 	}
 
-	
-} 
+    public function getshortbyListingAction(){
+        $category_id = $this->getRequest ()->getParam ( 'category_id' );
+        if($category_id) {     
+            $attributes  = Mage::getModel('catalog/category')->load($category_id)->getAvailableSortBy() ;
+            if($attributes){
+                $attributeArray = array();
+                foreach($attributes as $attribute) {
+                    $attributeInfo = Mage::getResourceModel('eav/entity_attribute_collection')
+                                ->setCodeFilter($attribute)
+                                ->getFirstItem();
+                    array_push($attributeArray, array($attribute => $attributeInfo->getData('frontend_label')));
+                }
+                
+                  echo  json_encode($attributeArray);
+            } else {
+                 $attributeArray = array();
+                foreach (Mage::getModel('catalog/config')->getAttributeUsedForSortByArray() as $key => $value) {
+                    array_push($attributeArray, array($key => $value));
+ 
+                }
+                 echo  json_encode($attributeArray);
+            }
+        }else{
+            echo  json_encode(array());
+        }
+    }
+}
