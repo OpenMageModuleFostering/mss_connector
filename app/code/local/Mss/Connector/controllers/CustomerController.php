@@ -182,7 +182,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		} catch ( Mage_Core_Exception $e ) {
 			if ($e->getCode () === Mage_Customer_Model_Customer::EXCEPTION_EMAIL_EXISTS) {
 				$url = Mage::getUrl ( 'customer/account/forgotpassword' );
-				$message = Mage::helper ( 'customer' )->__ ( 'This account is not confirmed.Please check your registered email.', $value );
+				$message = Mage::helper ( 'customer' )->__ ( 'There is already an account with this email address.Please try with another email id', $value );
 				$session->setEscapeMessages ( false );
 			} else {
 				$message = $this->__($e->getMessage ());
