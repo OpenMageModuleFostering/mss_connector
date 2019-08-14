@@ -173,9 +173,6 @@ class Mss_Pushnotification_Helper_Data extends Mage_Core_Helper_Abstract
                 ->addFieldToFilter('registration_id',array(eq=>$notification['registration_id']));
 
             if(!$filter->count()):
-            	$notification['create_date'] = Mage::getModel('core/date')->date('Y-m-d');
-            	$notification['update_date'] = Mage::getModel('core/date')->date('Y-m-d');
-            	$notification['app_status'] = 1;
                 $collection->setData($notification)->save();
             endif;
             

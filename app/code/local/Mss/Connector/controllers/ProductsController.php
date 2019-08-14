@@ -535,11 +535,14 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 
 			$products = Mage::getModel('catalog/product')->getCollection();
 			$products->addAttributeToSelect(array('name','entity_id','status','visibility'),'inner')
-				->setPageSize ($limit)
-				->addAttributeToFilter('name', array('like' => '%'.$searchstring.'%'))
-				->addAttributeToFilter ( 'status', 1 )
+	  		    ->setPageSize ($limit)
+				->addAttributeToFilter(array(
+	                array('attribute'=>'name', 'like' => '%'.$searchstring.'%'),
+	               array('attribute'=>'description', 'like'  => '%'.$searchstring.'%'),
+	            ))
+			    ->addAttributeToFilter ( 'status', 1 )
 				->addAttributeToFilter ( 'visibility', array ('neq' => 1 ) )
-				->setPage ( $page, $limit );
+	            ->setPage ( $page, $limit );
 
 	        $productlist = array ();
 	        $baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();

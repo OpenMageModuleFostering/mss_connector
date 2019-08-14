@@ -10,10 +10,4 @@
 		  <block type="connector/adminhtml_support" name="connector_support" template="connector/support.phtml"/>
 		</reference>
 	</connector_adminhtml_support_support>
-	
-	<connector_adminhtml_support_landing>
-		<reference name="content">
-		  <block type="connector/adminhtml_support" name="connector_support" template="connector/landing.phtml"/>
-		</reference>
-	</connector_adminhtml_support_landing>
 </layout>

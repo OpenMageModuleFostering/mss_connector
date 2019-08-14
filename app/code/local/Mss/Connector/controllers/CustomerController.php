@@ -54,17 +54,15 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 		$customerinfo = array ();
 
-		if (Mage::getSingleton ( 'customer/session' )->isLoggedIn()) {			
-			$customer = Mage::getSingleton ( 'customer/session' )->getCustomer ();	
+		if (Mage::getSingleton ( 'customer/session' )->isLoggedIn()) {
+			$customer = Mage::getSingleton ( 'customer/session' )->getCustomer ();
 			$storeUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA); 
 			
-
 			$customerinfo = array (
 					'id'=>$customer->getId(),
 					'name' => $customer->getFirstname () .' '.$customer->getLastname (),
 					'email' => $customer->getEmail (),
 					);
-			
 				
 			return $customerinfo;
 		} else	return false;
@@ -78,15 +76,12 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 			
 		$session = Mage::getSingleton ( 'customer/session' );
-
-		if (Mage::getSingleton ( 'customer/session' )->isLoggedIn ()) {			 
+		if (Mage::getSingleton ( 'customer/session' )->isLoggedIn ()) {
 			$session->logout ();
 		}
 		$username = Mage::app ()->getRequest ()->getParam ( 'username' );
-		$password = Mage::app ()->getRequest ()->getParam ( 'password' );
-		
-		//Mage::log(print_r($username, true),null,'cust.log');
-			 
+	    $password = Mage::app ()->getRequest ()->getParam ( 'password' );
+		 
 		try {
 			if (!$session->login ( $username, $password )) {
 				echo json_encode(array('status' => 'error','message'=> $this->__('wrong username or password.')));
@@ -177,12 +172,13 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				}
 				
 				echo json_encode ( array (
-					'status'=>	true,
-					'message' => 'Successfully register with us.'	
+						true,
+						'0x0000',
+						array () 
 				) );
 			} else {
 				echo json_encode ( array (
-					'status'=>false,
+						false,
 						'0x1000',
 						$errors 
 				) );
@@ -196,11 +192,14 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				$message = $this->__($e->getMessage ());
 			}
 			echo json_encode ( array (
-					'message'=>	$message,
-					'status'=>false
+					false,
+					'0x1000',
+					array (
+							$message
+					) 
 			) );
 		} catch ( Exception $e ) {
-			echo json_encode ( array ('status'=>
+			echo json_encode ( array (
 					false,
 					'0x1000',
 					$this->__($e->getMessage () )
@@ -220,7 +219,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			$customer = Mage::getModel ( 'customer/customer' )->setWebsiteId ( Mage::app ()->getStore ()->getWebsiteId () )->loadByEmail ( $email );
 			$this->_sendEmailTemplate ( $customer,self::XML_PATH_FORGOT_EMAIL_TEMPLATE, self::XML_PATH_FORGOT_EMAIL_IDENTITY, array (
 					'customer' => $customer 
-			), $this->storeId );
+			), $storeId );
 			echo json_encode ( array (
 					'status' => 'error',
 					'message' => $this->__('Request has sent to your Email.')
@@ -397,7 +396,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
  		$id=(int)$this->getRequest()->getParam('addressid');
  		
  		
- 			$address=Mage::getModel('customer/address')->load($id);			
+ 			$address=Mage::getModel('customer/address')->load($id);
 			
  			if($address->getId()):
 
@@ -673,18 +672,16 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		                     "name" => $name,
 		                     "sku" => $sku,
 		                     "id" => $ids,
-		                     "quantity" => (int)$qty,
+		                     "quantity" =>(int)$qty,
 		                     "unitprice" => $unitPrice,
 		                     "image" => $images,
 		                     "total_item_count" => $itemcount,
 		                     "price_org" =>  $test_p,
 		                     "price_based_curr" => 1,
 		                );
-               		
 
                 }  # item foreach close
-               
-              Mage::log(print_r( $productlist, true),null,'cust.log');
+              
                
                 $order_date = $order->getCreatedAtStoreDate().'';
                 $orderData = array(
@@ -742,8 +739,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			
 			if(Mage::getSingleton('customer/session')->isLoggedIn()):		 
 			    $info=array();
-			    $customer = Mage::getSingleton('customer/session')->getCustomer();
-
+			    $customer = Mage::getSingleton('customer/session')->getCustomer();			   
 			    $info['firstname'] =  $customer->getFirstname(); 		  
 			    $info['lastname'] = $customer->getLastname();
 			    $customerAddressId =$customer->getDefaultBilling(); 
@@ -859,7 +855,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 	 Response : JSON
 
 	*/
-	 public function editCustomerAddressAction(){
+    public function editCustomerAddressAction(){
 
 	 	if (Mage::getSingleton ( 'customer/session' )->isLoggedIn()):
 
@@ -959,8 +955,8 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 
 	 }
-
-	 /*Delete Address API*/
+	 
+	  /*Delete Address API*/
 
 	 /*
 	 URL : baseurl/restapi/customer/deleteAddress

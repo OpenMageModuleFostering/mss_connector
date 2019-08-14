@@ -1,7 +1,11 @@
+<?php $secure_key =    Mage::getStoreConfig('magentomobileshop/secure/key');
+            $decode = base64_encode($secure_key);
+ ?>
 <script>
  function showResult()
 {
-     window.location.href = 'https://www.magentomobileshop.com/user';
+     //window.location.href = 'https://www.magentomobileshop.com/user';
+     window.location.href = 'http://mastersoftwaretechnologies.com/magentomobilecart/user/activating-app?app=<?php echo $decode; ?>';
 }
     </script>
                

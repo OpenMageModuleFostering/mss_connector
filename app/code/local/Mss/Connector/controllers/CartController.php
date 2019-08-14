@@ -407,7 +407,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			  {
 					  echo json_encode ( array (
 							'status' => 'error',
-							'message' => $this->__("Coupon code  Is not Valid" ) 
+							'message' => $this->__("Coupon code  is not Valid" ) 
 					  ));
 					return false;
 			  }
@@ -504,7 +504,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			              ->setCollectShippingRates(true);	        	
 			        }
 			        $quote->save();
-			        $quote->getShippingAddress()->setShippingMethod($shipping_method.'_'.$shipping_method)->save();
+			        $quote->getShippingAddress()->setShippingMethod($shipping_method)->save();
 		        }
         
 		        $quote->collectTotals ()->save ();
@@ -527,7 +527,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			              ->setCollectShippingRates(true);	
 			        }
 			        $quote->save();
-			        $quote->getShippingAddress()->setShippingMethod($shipping_method.'_'.$shipping_method)->save();
+			        $quote->getShippingAddress()->setShippingMethod($shipping_method)->save();
 		    	}
 		        $quote->collectTotals ()->save ();
 		        $amount=$quote->getShippingAddress();
@@ -803,7 +803,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	
 	
 	####get all enabled shipping methods
-	public function getshippingmethodsAction(){
+	public function getshippingmethodsAction(){ 
 
 		$methods = Mage::getSingleton('shipping/config')->getActiveCarriers();
 		$shipMethods = array();
@@ -813,32 +813,42 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		foreach ($methods as $shippigCode=>$shippingModel) 
 		{
 
-			if($shippigCode == 'freeshipping'):
-				if(Mage::getStoreConfig('carriers/'.$shippigCode.'/free_shipping_subtotal') < Mage::helper('checkout/cart')->getQuote()->getBaseSubtotalWithDiscount()):
+		   if( $carrierMethods = $shippingModel->getAllowedMethods() )
+  		   {
+	       foreach ($carrierMethods as $methodCode => $method)
+	       {
+	            $code= $shippigCode.'_'.$methodCode;
+	  	
+	  
+				if($shippigCode == 'freeshipping'):
+					if(Mage::getStoreConfig('carriers/'.$shippigCode.'/free_shipping_subtotal') < Mage::helper('checkout/cart')->getQuote()->getBaseSubtotalWithDiscount()):
+						$shippingTitle = Mage::getStoreConfig('carriers/'.$shippigCode.'/title');
+					    	$shippingPrice = Mage::getStoreConfig('carriers/'.$shippigCode.'/price');
+					    	$shipMethods[]=array(
+					    				'code'=>$shippigCode.'_'.$shippigCode,
+					    				'value'=>$shippingTitle,
+					    				'price'=>number_format ( Mage::helper ( 'directory' )
+												->currencyConvert ( $shippingPrice, 
+												$baseCurrency, 
+												$currentCurrency ), 2, '.', '' )
+					    		);
+					endif;
+
+				else:
 					$shippingTitle = Mage::getStoreConfig('carriers/'.$shippigCode.'/title');
 				    	$shippingPrice = Mage::getStoreConfig('carriers/'.$shippigCode.'/price');
 				    	$shipMethods[]=array(
-				    				'code'=>$shippigCode,
+				    				'code'=>$code,
 				    				'value'=>$shippingTitle,
 				    				'price'=>number_format ( Mage::helper ( 'directory' )
-											->currencyConvert ( $shippingPrice, 
-											$baseCurrency, 
-											$currentCurrency ), 2, '.', '' )
+												->currencyConvert ( $shippingPrice, 
+												$baseCurrency, 
+												$currentCurrency ), 2, '.', '' )
 				    		);
 				endif;
+			     }
 
-			else:
-				$shippingTitle = Mage::getStoreConfig('carriers/'.$shippigCode.'/title');
-			    	$shippingPrice = Mage::getStoreConfig('carriers/'.$shippigCode.'/price');
-			    	$shipMethods[]=array(
-			    				'code'=>$shippigCode,
-			    				'value'=>$shippingTitle,
-			    				'price'=>number_format ( Mage::helper ( 'directory' )
-											->currencyConvert ( $shippingPrice, 
-											$baseCurrency, 
-											$currentCurrency ), 2, '.', '' )
-			    		);
-			endif;
+  			 }
 		    
 		    		
 		}
@@ -905,20 +915,23 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 					
 
 					$session = Mage::getSingleton ( 'customer/session' );
-					$customerId=$session->getId();					
+					$customerId=$session->getId();
+
+					
 					
 					##Get current quote 
 					$totalItems = Mage::helper('checkout/cart')->getSummaryCount();
 				
 					if($totalItems > 0):
-							#get the addressid						
-						
+							#get the addressid
 							$addressId=(int)$this->getRequest()->getParam('addressid');
 							$shipping_method=$this->getRequest()->getParam('shippingmethod'); 
 							$paymentmethod=$this->getRequest()->getParam('paymentmethod');
 							$registration_id = $this->getRequest()->getParam('registration_id');
 							$card_details = $this->getRequest()->getParam('cards_details');
 							$save_cc = $this->getRequest()->getParam('save_cc');
+
+
 
 							if($paymentmethod == 'authorizenet')
 								$this->validateCarddtails(json_decode($card_details,1));
@@ -954,13 +967,13 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 							try {
 								$addressData=Mage::getModel('customer/address')->load($addressId)->getData();
 								$quote=Mage::getSingleton ( 'checkout/session' )->getQuote();
-								$quote->setMms_order_type('app')->save();
+								//$quote->setMms_order_type('app')->save();
 
 								$billingAddress = $quote->getBillingAddress()->addData($addressData);
 								$shippingAddress = $quote->getShippingAddress()->addData($addressData);
 								 
 								$shippingAddress->setCollectShippingRates(true)->collectShippingRates()
-								                ->setShippingMethod($shipping_method.'_'.$shipping_method);
+								                ->setShippingMethod($shipping_method);
 
 								if($paymentmethod != 'authorizenet'):
 									$shippingAddress->setPaymentMethod($paymentmethod);
@@ -990,6 +1003,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 								$service = Mage::getModel('sales/service_quote', $quote);
 								$service->submitAll();
 								$order = $service->getOrder();
+								$order->setMms_order_type('app')->save();
 								 $quote->delete();
 								
 								$cart = Mage::helper ( 'checkout/cart' )->getCart ();
@@ -1000,7 +1014,6 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 								 $result=array(	'message'=>$this->__('Order placed successfully.'),
 								 				'orderid'=>$order->getIncrementId(),
-															'result'=>'success',
 															'result'=>'success'
 
 													);
@@ -1049,7 +1062,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 						endif;
 
 						$checkout_session =Mage::getModel ( 'checkout/session' )->getQuoteId();
-						Mage::getSingleton ( 'checkout/session' )->getQuote()->setMms_order_type('app')->save();
+						//Mage::getSingleton ( 'checkout/session' )->getQuote()->setMms_order_type('app')->save();
 
 						$quote = Mage::getModel('sales/quote')->load($checkout_session);
 						$quote->setStoreId(Mage::app()->getStore()->getId());
@@ -1087,7 +1100,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 						 $quote->getShippingAddress()
 					            ->addData($billingAddress)
-					            ->setShippingMethod($shipping_method.'_'.$shipping_method);
+					            ->setShippingMethod($shipping_method);
 					         							
 						$quote->getShippingAddress()->setCollectShippingRates(true)->collectShippingRates();
 						$quote->collectTotals();
@@ -1117,6 +1130,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				        $service = Mage::getModel('sales/service_quote', $quote);
 				        $service->submitAll();
 				        $order = $service->getOrder();
+				        $order->setMms_order_type('app')->save();
 				     
      					$increment_id = $order->getRealOrderId();	 				
 						$quote = $customer = $service = null;
@@ -1292,7 +1306,6 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		public function getcheckoutcartAction(){
 			 $customerId =(int)$this->getRequest()->getParam('customerid');
 
-
        if ($customerId) { 
         
           $customer = Mage::getModel('customer/customer')->load($customerId); 
@@ -1300,7 +1313,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
           $cart = Mage::getModel('sales/quote') ->loadByCustomer($customer);
               
               if(!count($cart->getAllItems())):
-                echo json_encode(array('status'=>'success','message'=> $product));
+                echo json_encode(array('status'=>'success','message'=>$product));
                 exit;
               endif;
               $product_model = Mage::getModel ( 'catalog/product' );
@@ -1308,7 +1321,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
             $baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
 			$currentCurrency = $this->currency;
 
-                foreach ($cart->getAllVisibleItems() as $item) {        
+                foreach ($cart->getAllVisibleItems() as $item) {
+
                   $productName= array();
                   $productName['cart_item_id'] = $item->getId();
                   $productName['id'] = $item->getProductId();
@@ -1335,14 +1349,14 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
               $product['subtotal'] = $cart->getSubtotal();
               $product['grandtotal'] = $cart->getGrandTotal();
               $product['totalitems'] = $cart->getItemsCount();
-            $product['symbol'] = Mage::helper('connector')->getCurrencysymbolByCode($this->currency);
+              $product['symbol'] = Mage::helper('connector')->getCurrencysymbolByCode($this->currency);
               
-              echo json_encode(array('status'=>'success','message'=> $product));
+              echo json_encode(array('status'=>'success','message'=>$product));
 
               }
             catch(exception $e)
             {
-              echo json_encode(array('status'=>'error','message'=> $e->getMessage()));
+              echo json_encode(array('status'=>'error','message'=> $this->__($e->getMessage())));
             } 
           }
           else {
@@ -1358,7 +1372,6 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 					$items = $quote->getAllVisibleItems ();
 					$cartItemArr='';
 					foreach ( $items as $item ){
-
 					  $productName= array();
 	                  $productName['cart_item_id'] = $item->getId();
 	                  $productName['id'] = $item->getProductId();
