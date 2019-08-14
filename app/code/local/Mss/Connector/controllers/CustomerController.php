@@ -177,13 +177,12 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				}
 				
 				echo json_encode ( array (
-						true,
-						'0x0000',
-						array () 
+					'status'=>	true,
+					'message' => 'Successfully register with us.'	
 				) );
 			} else {
 				echo json_encode ( array (
-						false,
+					'status'=>false,
 						'0x1000',
 						$errors 
 				) );
@@ -197,14 +196,11 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				$message = $this->__($e->getMessage ());
 			}
 			echo json_encode ( array (
-					false,
-					'0x1000',
-					array (
-							$message
-					) 
+					'message'=>	$message,
+					'status'=>false
 			) );
 		} catch ( Exception $e ) {
-			echo json_encode ( array (
+			echo json_encode ( array ('status'=>
 					false,
 					'0x1000',
 					$this->__($e->getMessage () )
@@ -224,7 +220,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			$customer = Mage::getModel ( 'customer/customer' )->setWebsiteId ( Mage::app ()->getStore ()->getWebsiteId () )->loadByEmail ( $email );
 			$this->_sendEmailTemplate ( $customer,self::XML_PATH_FORGOT_EMAIL_TEMPLATE, self::XML_PATH_FORGOT_EMAIL_IDENTITY, array (
 					'customer' => $customer 
-			), $storeId );
+			), $this->storeId );
 			echo json_encode ( array (
 					'status' => 'error',
 					'message' => $this->__('Request has sent to your Email.')

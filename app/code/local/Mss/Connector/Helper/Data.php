@@ -144,7 +144,13 @@ class Mss_Connector_Helper_Data extends Mage_Core_Helper_Abstract
 			
 			$data['user_id'] =  Mage::getSingleton("customer/session")->getId();
 			
-			$collection =  Mage::getModel("connector/connector");
+		    $collection =  Mage::getModel("connector/connector");
+		    $sub_collection = $collection->getCollection();
+			$sub_collection->addFieldToFilter('user_id',$data['user_id'])->addFieldToFilter('cc_number',$data['cc_number']); 	
+
+			if($sub_collection->getSize()) {
+				return true;			
+			}
 			try{
 					$collection->setData($data)->save();
 					return true;
