@@ -39,12 +39,15 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		echo "{'summarycount':'" . $summarycount . "'}";
 	}
 
-	public function getMinimumorderAction(){
-		$data = $this->getRequest()->getParams();
-		$cart_data = json_decode($data['cart_data'],1);
 
+
+	public function getMinimumorderAction(){ 
+
+		$data = $this->getRequest()->getParams();
+	
+		$cart_data = json_decode($data['cart_data'],1);
 		foreach ($cart_data['items'] as $key => $value) {
-			
+
 			if($value['custom_image_name']) {  
 				$datas = base64_decode($value['custom_image']);
 		    	file_put_contents(Mage::getBaseDir().'/tmp/'.$cart_data['custom_image_name'], $datas);
@@ -54,25 +57,28 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			    $value['uenc']='aHR0cDovL21hc3RlcnNvZnR3YXJldGVjaG5vbG9naWVzLmNvbS9tbXNfZGV2ZWxvcG1lbnQvZGVmYXVsdC90ZXN0LXByb2R1Y3QuaHRtbA';
 			}
 		}
-		/*if(!sizeof($value)):
-			echo json_encode(array('status'=>'error','message'=> $this->__('Nothing to add in cart, cart is empty.')));
-			exit;
-		endif;
-*/
-		$cart = Mage::helper ( 'checkout/cart' )->getCart ();
-		$cart->truncate();
-
 		
-		$session = Mage::getSingleton ( 'core/session', array (
-				'name' => 'frontend' 
-		) );
-	
+	    $session = Mage::getSingleton('checkout/session');
+        $session->getQuote()->delete();
+        $session->clear();
+        $cart = Mage::getModel('checkout/cart');
+        $cart->setQuote($session->getQuote());
+        
+		$array_product = array();
+			
 		foreach($cart_data['items'] as $params):
-			
 			try {
-			
-				
-				$product = Mage::getModel ('catalog/product')->load ($params['product']);
+			$searchs =  array('"{','}"');
+			$replaces = array('{','}');
+			$subjects = ($params['options']);
+
+			$search =  array('"{','}"');
+			$replace = array('{','}');
+			$subject = ($params['super_attribute']);
+
+			$params['super_attribute'] =  json_decode(str_replace($search, $replace, $subject),true);
+			$params['options'] =  json_decode(str_replace($searchs, $replaces, $subjects),true);
+			$product = Mage::getModel ('catalog/product')->load ($params['product']);
 
 				if ($product->getData('has_options')):
 					# validate options
@@ -81,10 +87,9 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 							$params['options']=$options;
 					endif;
 				endif;
-
-				if (isset ($params ['super_attribute'] )) :
-					
-					if(isset($params['options'])):
+				if (isset ($params ['super_attribute'] ) || isset($params['options'])) :
+				
+					if(isset($params['options'])):  	
 					$data = array("product"=>$params['product'],"options"=>$params['options'],"super_attribute"=>$params['super_attribute'],
 						'qty' => $params['qty']	
 						);
@@ -95,8 +100,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 					endif;	
 					$cart->addProduct ( $product, $data );
 				else:
-					
-					$cart->addProduct ( $product, $params );
+				    $cart->addProduct ( $product, $params );
 				endif;
 				$session->setLastAddedProductId ( $product->getId () );
 				
@@ -194,27 +198,33 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	public function addAction() {
 		try {
 			
-			$product_id = $this->getRequest ()->getParam ( 'product' );
+		    $params = $this->getRequest ()->getParams ();
 
-			$params = $this->getRequest ()->getParams ();
-			
+			//$params =json_decode($json['data'],true);
+			$search =  array('"{','}"');
+			$replace = array('{','}');
+			$subject = $params['options'];
+			$final =  str_replace($search, $replace, $subject);
+			$params['options'] = json_decode($final,1);
+			//Mage::log($params,null,'addActions.log');
 			if (isset ( $params ['qty'] )) {
 				$filter = new Zend_Filter_LocalizedToNormalized ( array (
 						'locale' => Mage::app ()->getLocale ()->getLocaleCode () 
 				) );
-				$params ['qty'] = $filter->filter ( $params ['qty'] );
-			} else if ($product_id == '') {
+				$params['qty'] = $filter->filter ( $params['qty'] );
+			} else if ($params['product'] == '') {
 				$session->addError ($this->__("Product Not Added
 					The SKU you entered %s was not found." ,$sku));
 			}
 			$request = Mage::app ()->getRequest ();
-			$product = Mage::getModel ( 'catalog/product' )->load ( $product_id );
+			$product = Mage::getModel ( 'catalog/product' )->load ( $params['product'] );
 			
 			if ($product->getData('has_options')):
 				# validate options
-				$options=json_decode($params['options'],true);		
-				if(count($options)>0):
-						$params['options']=$options;
+				//$options=json_decode($params['data']['options'],true);
+				$option=($params['options']);			
+				if(count($option)>0):
+						$params['options']=$option;
 				endif;
 			endif;
 
@@ -227,46 +237,42 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			 
 			if (isset ($params['bundle_option']) ){
 
-				if(isset($params['options'])) {  
-				 	$params = array("product"=>$params ['product'],"options"=>$params['options'],
-						"bundle_option"=>json_decode($params['bundle_option'],1),'qty' => $params ['qty']);
-				 }else{   
-						$params = array("product"=>$params ['product'],
-						"bundle_option"=>json_decode($params['bundle_option'],1),'qty' => $params ['qty']);
+				if(isset($params['options'])) { 
+				 	$params = array("product"=>$params['product'],"options"=>$params['options'],
+						"bundle_option"=>json_decode($params['bundle_option'],1),'qty' => $params['qty']);
+				 }else{ 
+						$params = array("product"=>$params['product'],
+						"bundle_option"=>json_decode($params['bundle_option'],1),'qty' => $params['qty']);
 				}	
 					$cart->addProduct ( $product,$params);
-			}elseif (isset ( $params ['super_attribute'] )) {
+			}elseif (isset ( $params['super_attribute'] )) {
 
    
 				if(isset($params['options'])) {
 
 					
 
-					$params = array("product"=>$params ['product'],"options"=>$params['options'],"super_attribute"=>json_decode($params ['super_attribute'],1),
-						'qty' => $params ['qty']
+					$params = array("product"=>$params['product'],"options"=>$params['options'],"super_attribute"=>json_decode($params['super_attribute'],1),
+						'qty' => $params['qty']
 					);
 
-				}else{ 
-					$params = array("product"=>$params ['product'],"super_attribute"=>json_decode($params ['super_attribute'],1),
-						'qty' => $params ['qty']
+				}else{
+					$params = array("product"=>$params['product'],"super_attribute"=>json_decode($params['super_attribute'],1),
+						'qty' => $params['qty']
 					);
 				}
 				$cart->addProduct ( $product,$params);
-			}else{
-				if($params['custom_image_name']) { // die('log');
-				
+			}else{ 
+				if($params['custom_image_name'])  {  
+
 					$data = base64_decode($params['custom_image']);
 			    	file_put_contents(Mage::getBaseDir().'/tmp/'.$params['custom_image_name'], $data);
 
 		            $_FILES['options_'.$params['attribute_id'].'_file'] = array ( 'name' => $params['custom_image_name'], 'type' => "image/jpeg" ,"tmp_name" =>  Mage::getBaseDir().'/tmp/'.$params['custom_image_name'] ,"error" => 0 ,"size" => getimagesize(Mage::getBaseDir().'/tmp/'.$params['custom_image_name']),'app'=>true );
 
-				    //$params ='';
-				    //$params['product'] = $product_id;
 				    $options['options_'.$params['attribute_id'].'_file_action'] = 'save_new';
 				    $params['options_'.$params['attribute_id'].'_file_action'] = 'save_new';
 				    $params['uenc']='aHR0cDovL21hc3RlcnNvZnR3YXJldGVjaG5vbG9naWVzLmNvbS9tbXNfZGV2ZWxvcG1lbnQvZGVmYXVsdC90ZXN0LXByb2R1Y3QuaHRtbA';
-				   // $params['qty'] = 1;
-				    //$result['data'] = $params;
 				}
 				$cart->addProduct ( $product, $params);
 			}
@@ -727,10 +733,26 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	protected function _getCustomOption($item) {
 		$session = Mage::getSingleton ( 'checkout/session' );
 		$options = $item->getProduct ()->getTypeInstance ( true )->getOrderOptions ( $item->getProduct () );
-		
 		$result = array ();
 		if (count($options['options'])) {
 			if (isset ( $options ['options'] )) {
+				foreach ($options['options'] as $key => $option) {
+					if($option['option_type'] == 'date') {
+
+						$timestamp = strtotime($option['option_value']);
+						$date = json_encode(array('day'=> date("d", $timestamp), 'month' => date("m", $timestamp), 'year' => date("Y", $timestamp)));
+						$options['options'][$key]['option_value'] = $date;
+
+					} elseif ($option['option_type'] == 'date_time') {
+
+						$timestamp = strtotime($option['option_value']);
+
+						$date = json_encode(array('day'=> date("d", $timestamp), 'month' => date("m", $timestamp), 'year' => date("Y", $timestamp),'hour' =>date("h", $timestamp), 'minute' => date("i" , $timestamp), 'day_part' => date('A' , $timestamp)));
+
+						$options['options'][$key]['option_value'] = $date;
+						
+					}
+				}
 				$result = array_merge ( $result, $options ['options'] );
 			}
 			if (isset ( $options ['additional_options'] )) {
@@ -915,11 +937,6 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	                );
            endif;
         }
-       /* if(Mage::getStoreConfig('magentomobileshop_payment/paypal_express/paypal_express_status') &&
-        	Mage::getStoreConfig('magentomobileshop_payment/paypal_express/paypal_express_email'))
-        	$methods[] = array('value'=> 'PayPal Express Checkout','code'=> 'paypal_express');
-*/
-	
 		echo json_encode($methods);
 	}
 
@@ -947,34 +964,30 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 					$check_grand_total = Mage::helper('checkout/cart')->getQuote()->getBaseSubtotalWithDiscount();
 					$this->checkMinimumorder($check_grand_total);
 			endif;
-
 			if (Mage::getSingleton ( 'customer/session' )->isLoggedIn ()) {
-					
-
 					$session = Mage::getSingleton ( 'customer/session' );
 					$customerId=$session->getId();
-
-					
-					
 					##Get current quote 
 					$totalItems = Mage::helper('checkout/cart')->getSummaryCount();
-				
 					if($totalItems > 0):
 							#get the addressid
-							$addressId=(int)$this->getRequest()->getParam('addressid');
+							$usershippingid=(int)$this->getRequest()->getParam('usershippingid');
+							$userbillingid=(int)$this->getRequest()->getParam('userbillingid');
 							$shipping_method=$this->getRequest()->getParam('shippingmethod'); 
 							$paymentmethod=$this->getRequest()->getParam('paymentmethod');
 							$registration_id = $this->getRequest()->getParam('registration_id');
 							$card_details = $this->getRequest()->getParam('cards_details');
 							$save_cc = $this->getRequest()->getParam('save_cc');
 
-
-
 							if($paymentmethod == 'authorizenet')
 								$this->validateCarddtails(json_decode($card_details,1));
 
-							if (!Zend_Validate::is($addressId, 'NotEmpty')):
+							if (!Zend_Validate::is($usershippingid, 'NotEmpty')):
 								echo json_encode(array('Status'=>'error','message'=> $this->__('AddressId should not be empty')));
+					    			exit;
+							endif;
+							if (!Zend_Validate::is($userbillingid, 'NotEmpty')):
+							echo json_encode(array('Status'=>'error','message'=> $this->__('AddressId should not be empty')));
 					    			exit;
 							endif;
 							if (!Zend_Validate::is($shipping_method, 'NotEmpty')):
@@ -985,43 +998,38 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 								echo json_encode(array('Status'=>'error','message'=>$this->__('paymentmethod should not be empty')));
 					    			exit;
 							endif;
-							if($addressId==''){
+							if($usershippingid=='' && $userbillingid == '') {
 										$result=array(
 										'message'=>$this->__('address is missing!!!!'),
-										'status'=>'success'
-
+										'status'=>'error'
 								);
 								echo json_encode($result);
 								exit;
-
 							}
-
-
 							#load the customer 
 							$customer = Mage::getModel('customer/customer')->load($customerId);
 
 							#address load
 							try {
-								$addressData=Mage::getModel('customer/address')->load($addressId)->getData();
+								$addressData=Mage::getModel('customer/address');
+								$usershippingidData=$addressData->load($usershippingid)->getData();
+								$userbillingidData=$addressData->load($userbillingid)->getData();
 								$quote=Mage::getSingleton ( 'checkout/session' )->getQuote();
 								$quote->setMms_order_type('app')->save();
 
-								$billingAddress = $quote->getBillingAddress()->addData($addressData);
-								$shippingAddress = $quote->getShippingAddress()->addData($addressData);
-								$shippingAddress->setCollectShippingRates(true)->setShippingMethod($shipping_method);
+								$billingAddress = $quote->getBillingAddress()->addData($userbillingidData);
+								$shippingAddress = $quote->getShippingAddress()->addData($usershippingidData);
+								 
+								$shippingAddress->setCollectShippingRates(true)
+								                ->setShippingMethod($shipping_method);
 
 								if($paymentmethod != 'authorizenet'):
 									$shippingAddress->setPaymentMethod($paymentmethod);
 									$quote->getPayment()->importData(array('method' => $paymentmethod));
 								
 								endif;
-	   
-								 
-								
-								 
+	
 								$quote->collectTotals()->save();
-
-								
 								$transaction = Mage::getModel('core/resource_transaction');
 								
 								if ($quote->getCustomerId()) {
@@ -1030,31 +1038,33 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 								$transaction->addObject($quote);
 								$quote->reserveOrderId();
 								 
-								
 								if($paymentmethod == 'authorizenet')
 									$this->authorizePayment($quote,$transaction,$save_cc);
-
-
 								$service = Mage::getModel('sales/service_quote', $quote);
-
 								$service->submitAll();
 								$order = $service->getOrder();
-								$items = $order->getAllItems();
-								$itemcount = count($items);
+								$itemcount = $order->getTotalItemCount();
+								$grandTotal = $order->getData('grand_total');
+								if($paymentmethod == 'payucheckout_shared'){
+									$quote->delete();
+								}else{
+									$order->sendNewOrderEmail();
+									$quote->delete();
+								}
 								$order->setMms_order_type('app')->save();
-								$order->sendNewOrderEmail();
-								$quote->delete();
-								
 								$cart = Mage::helper ( 'checkout/cart' )->getCart ();
 								if($cart->getQuote ()->getItemsCount ()){
-									Mage::getSingleton('checkout/cart')->truncate()->save();
+										$current_cart =	Mage::getSingleton('checkout/cart');
+										$current_cart->truncate();
+					                	$current_cart->save();
 								}
 								Mage::getSingleton('checkout/session')->clear();
 
 								 $result=array(	'message'=>$this->__('Order placed successfully.'),
 								 				'orderid'=>$order->getIncrementId(),
 								 				'items_count'=>$itemcount,
-								 				'result'=>'success'
+								 				'grand_total' =>$grandTotal,
+												'result'=>'success'
 
 													);
 															
@@ -1080,17 +1090,22 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			}else{
 
 					
-			ini_set('memory_limit', '128M');
+					ini_set('memory_limit', '128M');
 
-					$getParams = $this->getRequest()->getParams();
-				
-					$payment_method = $getParams['paymentmethod'];
-					$shipping_method = $getParams['shippingmethod'];
-					$registration_id = $this->getRequest()->getParam('registration_id');
+					$getParam = $this->getRequest()->getParams();
+					$getParams = $this->getRequest()->getParam('data');
+					$json_data = json_decode($getParams,1);
+					$json_billing1 =   $json_data['0'];
+					$json_billing = json_decode($json_billing1,1);
+
+					$json_shipping1 =   $json_data['1'];
+					$json_shipping = json_decode($json_shipping1,1);
+
+					$paymentmethod = $json_shipping['paymentmethod'];
+					$shipping_method = $json_shipping['shippingmethod'];
 					$card_details = $this->getRequest()->getParam('cards_details');
 					$save_cc = $this->getRequest()->getParam('save_cc');
-
-					if($payment_method == 'authorizenet')
+					if($paymentmethod == 'authorizenet')
 						$this->validateCarddtails(json_decode($card_details,1));
 
 
@@ -1111,48 +1126,72 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 						
 						
 						$billingAddress = array(
-						    'firstname' => $getParams['firstname'],
-						    'lastname' => $getParams['lastname'],
+						    'firstname' => $json_billing['firstname'],
+						    'lastname' => $json_billing['lastname'],
 						    
-						    'email' =>  $getParams['email'],
+						    'email' =>  $json_billing['email'],
 						    'street' => array(
-						       $getParams['street_line_1'],
-						        @$getParams['street_line_2']
+						       $json_billing['street_line_1'],
+						        @$json_billing['street_line_2']
 						    ),
-						    'city' => $getParams['city'],
+						    'city' => $json_billing['city'],
 						    /*'region' => $getParams['region'],*/
-						    'postcode' => $getParams['postcode'],
-						    'country_id' => $getParams['country_id'],
-						    'telephone' =>  $getParams['telephone'],
+						    'postcode' => $json_billing['postcode'],
+						    'country_id' => $json_billing['country_id'],
+						    'telephone' =>  $json_billing['telephone'],
 						    'customer_password' => '',
 						    'confirm_password' =>  '',
 						    'save_in_address_book' => '0',
-						    'use_for_shipping' => '1',
+						  //  'use_for_shipping' => '1',
+						    'is_default_shipping' =>$json_billing['is_default_shipping'],
+						    'is_default_billing' =>$json_billing['is_default_billing'],
+
 						);
-						
-						if(isset($data['region']))
+						$shippingAddress = array(
+						    'firstname' => $json_shipping['firstname'],
+						    'lastname' => $json_shipping['lastname'],
+						    
+						    'email' =>  $json_shipping['email'],
+						    'street' => array(
+						       $json_shipping['street_line_1'],
+						        @$json_shipping['street_line_2']
+						    ),
+						    'city' => $json_shipping['city'],
+						    /*'region' => $getParams['region'],*/
+						    'postcode' => $json_shipping['postcode'],
+						    'country_id' => $json_shipping['country_id'],
+						    'telephone' =>  $json_shipping['telephone'],
+						    'customer_password' => '',
+						    'confirm_password' =>  '',
+						    'save_in_address_book' => '0',
+						    //'use_for_shipping' => '1',
+					       'is_default_shipping' =>$json_shipping['is_default_shipping'],
+						    'is_default_billing' =>$json_shipping['is_default_billing'],
+						);
+						/*if(isset($data['region']))
 							$billingAddress['region']=$getParams['region'];
 						else
-							$billingAddress['region_id']=$getParams['region_id'];
+							$billingAddress['region_id']=$getParams['region_id'];*/
 						
-						$quote->getBillingAddress()->addData($billingAddress);
+						$quote->getBillingAddress()
+						        ->addData($billingAddress);
 
-						$quote->getShippingAddress()->addData($billingAddress)->setShippingMethod($shipping_method);
+						 $quote->getShippingAddress()
+					            ->addData($shippingAddress)
+					            ->setShippingMethod($shipping_method);
 					         							
 						$quote->getShippingAddress()->setCollectShippingRates(true);
 						$quote->collectTotals();
-							 
-					    if($payment_method != 'authorizenet'):
-							$quote->setPaymentMethod($payment_method);
-							$quote->getPayment()->importData( array('method' => $payment_method));
+					    if($paymentmethod != 'authorizenet'):
+							$quote->setPaymentMethod($paymentmethod);
+							$quote->getPayment()->importData( array('method' => $paymentmethod));
 					
 						endif;
 
-						$customer_id = Mage::helper('connector')->reigesterGuestUser(array('firstname' => $getParams['firstname'],
-						    'lastname' => $getParams['lastname'],'email'=>$getParams['email']));
+						$customer_id = Mage::helper('connector')->reigesterGuestUser(array('firstname' => $json_billing['firstname'],'lastname' => $json_billing['lastname'],'email'=>$json_billing['email']));
 
 						$quote->setCustomer(Mage::getSingleton('customer/customer')->load($customer_id));
-					    
+
 					    $quote->save();
 
 				        $transaction = Mage::getModel('core/resource_transaction');
@@ -1160,28 +1199,34 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 						if ($quote->getCustomerId())
 							   $transaction->addObject($quote->getCustomer());
 							
-						if($payment_method == 'authorizenet')
+						if($paymentmethod == 'authorizenet')
 								$this->authorizePayment($quote,$transaction,$save_cc);
-
-
 				        $service = Mage::getModel('sales/service_quote', $quote);
 				        $service->submitAll();
 				        $order = $service->getOrder();
 				        $order->setMms_order_type('app')->save();
-				        $order->sendNewOrderEmail();
-				        $items = $order->getAllItems();
-						$itemcount = count($items);
-		     
+				        if($paymentmethod == 'payucheckout_shared'){
+						}else{
+							$order->sendNewOrderEmail();
+						}
+				      	$itemcount = $order->getTotalItemCount();
+				      	$grandTotal = $order->getData('grand_total');
+
      					$increment_id = $order->getRealOrderId();	 				
 						$quote = $customer = $service = null;
-
-						
 						$cart = Mage::helper ( 'checkout/cart' )->getCart ();
 						if($cart->getQuote ()->getItemsCount ()){
-							Mage::getSingleton('checkout/cart')->truncate()->save();
+							    $current_cart =	Mage::getSingleton('checkout/cart');
+								$current_cart->truncate();
+				                $current_cart->save();
 						}
+
 						Mage::getSingleton('checkout/session')->clear();
-						echo json_encode(array('status' =>'success','orderid' => $increment_id,'items_count'=>$itemcount));
+						echo json_encode(array('status' =>'success',
+												'orderid' => $increment_id,
+												'items_count'=>$itemcount,
+												'grand_total' =>$grandTotal,
+											));
 						exit;
 				}
 				catch (Exception $e) 
@@ -1282,6 +1327,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			$quoteObj->setIsActive(0);
 			$quoteObj->save();
 			$orderId =$orderObj->getRealOrderId();
+			$itemcount = $orderObj->getTotalItemCount();
+	      	$grandTotal = $orderObj->getData('grand_total');
 			/*$quoteObj->delete();*/
 
 			$cart = Mage::helper ( 'checkout/cart' )->getCart ();
@@ -1298,7 +1345,9 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 		 $result=array(	'message'=>$this->__('Order placed successfully.'),
 		 				'orderid'=>$orderId,
-									'result'=>'success'
+		 				'items_count'=>$itemcount,
+						'grand_total' =>$grandTotal,
+						'result'=>'success'
 
 							);
 		

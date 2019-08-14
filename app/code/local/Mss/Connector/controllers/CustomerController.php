@@ -212,7 +212,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 					'customer' => $customer 
 			), $storeId );
 			echo json_encode ( array (
-					'status' => 'error',
+					'status' => 'success',
 					'message' => $this->__('Request has sent to your Email.')
 			) );
 		} else
@@ -265,16 +265,17 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 	# set shipping Address and billing Address for customer
 	public function setAddressAction()
  	{
-		
+	
  		try {
  			$userid = Mage::app ()->getRequest ()->getParam ( 'userid' );
- 			//$session = Mage::getSingleton ( 'customer/session' );
-			//if (Mage::getSingleton ( 'customer/session' )->isLoggedIn ()) {
  			if($userid){
 				$customerId = $userid;
-				$data= Mage::app()->getRequest()->getParams();
-				
-				
+				$params = Mage::app ()->getRequest ()->getParam('data');
+				$respnse = json_decode($params,1);
+			 	$new_array = array();
+			  foreach ($respnse as $key => $datas) {
+				  	$tempData = str_replace("\\", "",$datas);
+					$data = json_decode($tempData,true);
 				if (!Zend_Validate::is($data['firstname'], 'NotEmpty')):
 					echo json_encode(array('status'=>'error','message'=> $this->__('Firstname should not be empty')));
 		    			exit;
@@ -295,16 +296,6 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 					echo json_encode(array('status'=>'error','message'=> $this->__('Country_id should not be empty')));
 		    			exit;
 				endif;
-
-			
-				if (!Zend_Validate::is($data['region'], 'NotEmpty') AND !Zend_Validate::is($data['region_id'], 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Region should not be empty'));
-		    			exit;
-				endif;
-				if (!Zend_Validate::is($data['postcode'], 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=> $this->__('Postcode should not be empty')));
-		    			exit;
-				endif;
 				if (!Zend_Validate::is($data['telephone'], 'NotEmpty')):
 					echo json_encode(array('status'=>'error','message'=> $this->__('Telephone should not be empty')));
 		    			exit;
@@ -323,30 +314,26 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
                     'street' => $data['street'],
                     'city' =>  $data['city'],
                     'country_id' =>  $data['country_id'],
-                    //'region' =>  $data['region'],                   
-                    'postcode' =>  $data['postcode'],
+                  //  'region_id' => $data['region_id'],
                     'telephone' =>  $data['telephone'],
-                    'fax' => @$data['fax'],
-                    'is_default_billing' => '1',
-                    'is_default_shipping' => '1',
+                    'postcode' =>  $data['postcode'],
+                    'is_default_billing' => $data['is_default_billing'],
+                    'is_default_shipping' => $data['is_default_shipping'],
                 );
-				if($data['region'])
+
+                if($data['region'])
 					$addressData['region'] = $data['region'];
 				else
 					$addressData['region_id'] = $data['region_id'];
 
-
 				$address = Mage::getModel("customer/address");
 			    $address->addData($addressData);
 				$address->setCustomerId($customerId);
-				 
+				
 				try{
 				    $address->save();
-				    $result['id']=$address->getId();
-				    $result['message']= $this->__('Address added successfully.');
-				    $result['status']='success';
-						
-				    echo json_encode($result);
+				    $new_array[] =$address->getId();
+				  	
 				}
 				catch (Exception $e) {
 				    
@@ -355,9 +342,13 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 						'message' => $this->__($e->getMessage())
 				) );
 				}
+		}		
 
- 
-				
+		  			$result['id']=$new_array;
+				    $result['message']= $this->__('Address added successfully.');
+				    $result['status']='success';
+				  
+				       echo json_encode($result);
 			}
 			else{
 
@@ -365,7 +356,6 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 						'status' => 'error',
 						'message' => $this->__('No matched email data.') 
 				) );
-				$session->logout(); 
 			}
  		
  		} catch (Exception $e) {
@@ -373,13 +363,9 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
  			echo json_encode ( array (
 						'status' => 'error',
-						'message' => $e->getMessage() 
+						'message' => "something went wrong" 
 				) );
- 			
-
  		}
-
- 		
  	}
 
  	public function getAddressbyidAction()
@@ -423,24 +409,21 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
  	# get shipping Address listing of customer
  	public function getAddressAction()
  	{
- 		
  		try {
  			$session = Mage::getSingleton ( 'customer/session' );
  			$userid = Mage::app ()->getRequest ()->getParam ( 'userid' );
- 			
-			
  			if($userid){
- 				
 				$customerId=$session->getId();
-
 				$customer = Mage::getModel('customer/customer')->load($userid); //insert cust ID
-				
+
 				#create customer address array
-				$customerAddress = array();
+				$currentAddress = array();
+				$alladdress= array();
 				#loop to create the array
+				$default_shipping = $customer->getDefaultShippingAddress();
+				$default_billing = $customer->getDefaultBillingAddress();
 				foreach ($customer->getAddresses() as $address)
 				{
-
 				    $address_array = array(
 
 				   		'id'=>$address->getId(),
@@ -451,14 +434,12 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				   		// 'country_id'=>$address->getCountryId(),
 			   			'country_name'=>Mage::getModel('directory/country')->loadByCode($address->getCountryId())->getName(),
 			   			'country_id'=>$address->getCountryId(),
-
-				   		//'region'=>$address->getRegion(),
 				   		'postcode'=>$address->getPostcode(),
 				   		'telephone'=>$address->getTelephone(),
 				   		'fax'=>$address->getFax(),
 				   		'email'=>$customer->getEmail(),
-
-
+			   		    'is_default_billing' => ($default_billing)?(($address->getId() == $default_billing->getId() && $default_billing)?1:0):0,
+                        'is_default_shipping' => ($default_shipping)?(($address->getId() == $default_shipping->getId() && $default_shipping)?1:0):0,
 				   );
 				   
 				   if ($address->getRegionId()) {
@@ -468,10 +449,18 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				   } else {
 				   		 $address_array['region'] = $address->getRegion();
 				   }
+				   if($default_billing) {
+				   		if($address->getId() == $default_billing->getId())
+				   	 		$currentAddress[] = $address_array;
+				   }
+				   	if($default_shipping) {
+				   		if($address->getId() == $default_shipping->getId())
+				   			$currentAddress[] = $address_array;
+				    }
 
-
-				   	$customerAddress[] = $address_array;
+				   	$alladdress[] = $address_array;
 				}
+					$customerAddress = array('alladdress'=>$alladdress,'currentAddress'=>$currentAddress);
 				
 				echo json_encode($customerAddress);
 			}
@@ -678,7 +667,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
                 $orderData = array(
                      "id" => $order->getId(),
                      "order_id" => $order->getRealOrderId(),
-                     "status" => $order->getStatus(),
+                     "status" => str_replace('_', ' ',$order->getStatus()),
                      "order_date" => $order_date,
                      "grand_total" => number_format($order->getGrandTotal(), 2, '.', ''),
                      "shipping_address" => $shippadd,
@@ -726,11 +715,13 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		Response : JSON
 	 
 	 */
-		public function getuserinfoAction(){
+			public function getuserinfoAction(){
 			
 			if(Mage::getSingleton('customer/session')->isLoggedIn()):		 
 			    $info=array();
-			    $customer = Mage::getSingleton('customer/session')->getCustomer();			   
+			    $customer = Mage::getModel('customer/customer')
+						->load(Mage::getSingleton('customer/session')->getId());
+			   // $customer = Mage::getSingleton('customer/session')->getCustomer();			   
 			    $info['firstname'] =  $customer->getFirstname(); 		  
 			    $info['lastname'] = $customer->getLastname();
 			    $customerAddressId =$customer->getDefaultBilling(); 
@@ -851,16 +842,11 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 	 	if (Mage::getSingleton ( 'customer/session' )->isLoggedIn()):
 
-	 		$addressId = $this->getRequest ()->getParam ('addressId');
+	 		$addressId = $this->getRequest ()->getParam ('addressId');  
 	 		$addressData = json_decode($this->getRequest ()->getParam ('addressData'),1);
-
-	 		if (!array_key_exists('region_id', $addressData)) {
-				$addressData['region_id'] = '';	 			
-	 		}
-	 		
 	 		$customer = Mage::getModel('customer/customer')->load(Mage::getSingleton ( 'customer/session' )->getCustomer()->getId());
-	 		$customer->setFirstname($addressData['firstname']); 
-		    $customer->setLastname ($addressData['lastname']); 
+	 		// $customer->setFirstname($addressData['firstname']); 
+		  //   $customer->setLastname ($addressData['lastname']); 
 		     
 
 			$address = Mage::getModel('customer/address')->load($addressId);

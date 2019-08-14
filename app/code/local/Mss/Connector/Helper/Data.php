@@ -143,9 +143,15 @@ class Mss_Connector_Helper_Data extends Mage_Core_Helper_Abstract
 		public function saveCc($data){
 			
 			$data['user_id'] =  Mage::getSingleton("customer/session")->getId();
-			
 			$collection =  Mage::getModel("connector/connector");
+			if($collection->getCollection()
+                    ->addFieldToFilter('cc_number',array('eq'=>$data['cc_number']))):
+				return true;
+			endif;
+			
 			try{
+
+
 					$collection->setData($data)->save();
 					return true;
 				}
@@ -207,9 +213,9 @@ class Mss_Connector_Helper_Data extends Mage_Core_Helper_Abstract
 		public function getSpecialPriceByProductId($productId)
 		{
 			$product = Mage::getModel('catalog/product')->load($productId);
-		    $specialprice = $product->getSpecialPrice(); 
-		    $specialPriceFromDate = $product->getSpecialFromDate();
-		    $specialPriceToDate = $product->getSpecialToDate();
+		    $specialprice = $product->getData('special_price');
+		    $specialPriceFromDate = $product->getData('special_from_date');
+		    $specialPriceToDate = $product->getData('special_to_date');
 		    
 		    $today =  time();
 		 
@@ -242,5 +248,26 @@ class Mss_Connector_Helper_Data extends Mage_Core_Helper_Abstract
 		   	endif;
 
 
+		}
+	
+		public function getSpecialPriceProduct($productId)
+		{ 
+			$product = Mage::getModel('catalog/product')->load($productId);
+		 	$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
+			$currentCurrency = Mage::app()->getFrontController()->getRequest()->getHeader('currency');
+
+
+			$specialprice =$this->getSpecialPriceByProductId($productId);
+		    $final_price_with_tax = Mage::helper ( 'directory' )
+								->currencyConvert ( 
+								Mage::helper('tax')->getPrice($product, $product->getData('final_price'), 
+								true, null, null, null, null, false),
+								$baseCurrency, $currentCurrency );
+								
+			 if($specialprice >= $final_price_with_tax):
+			 	return $final_price_with_tax;
+			 else:
+			 	return $specialprice;
+			 endif;
 		}
 }

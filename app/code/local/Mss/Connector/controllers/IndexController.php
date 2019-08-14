@@ -465,10 +465,9 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 							$baseCurrency, $currentCurrency ), 2, '.', '' ),
 					'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 					'qty'=>(int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty(),
-					'product_type'=>$product->getTypeId(),
 					'rating' => $rating_final,
 					'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-					'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
+					'specialprice'=> number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
 
 			);
 		}
@@ -536,7 +535,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 						'product_type'=>$product->getTypeId(),
 						'rating' => $rating_final,
 						'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-						'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
+						'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceProduct($product->getId ()), 2, '.', '' ),
 					);
 				endif;
 			else:
@@ -561,7 +560,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 					'product_type'=>$product->getTypeId(),
 					'rating' => $rating_final,
 					'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-					'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
+					'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceProduct($product->getId ()), 2, '.', '' ),
 				);
 			endif;
 		endforeach;
@@ -658,7 +657,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 							'product_type'=>$product->getTypeId(),
 							'rating' => $rating_final,
 							'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-							'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
+							'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceProduct($product->getId ()), 2, '.', '' ),
 					);
 				}
 			return $new_productlist;
@@ -733,7 +732,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 						'product_type'=>$product->getTypeId(),
 						'rating' => $rating_final,
 						'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-						'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
+						'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceProduct($product->getId ()), 2, '.', '' ),
 				);
 			}
 	

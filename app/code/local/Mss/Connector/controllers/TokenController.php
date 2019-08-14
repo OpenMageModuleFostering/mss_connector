@@ -172,6 +172,7 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 		  $adminSessionLifetime = (int)Mage::getStoreConfig('admin/security/session_cookie_lifetime'); 
 		  if($adminSessionLifetime < 86400)
 		  	$this->saveConfig('admin/security/session_cookie_lifetime','86400');
+		    $this->saveConfig('admin/cookie/cookie_lifetime','86400000');
 
 		  return true;
 	}

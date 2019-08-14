@@ -40,7 +40,7 @@ class Mss_Payu_IndexController extends Mage_Core_Controller_Front_Action{
                       ->setShouldCloseParentTransaction(true)
                       ->setIsTransactionClosed(1)
                       ->registerCaptureNotification();
-    
+    $order->sendNewOrderEmail();
         endif;
 
         $order->save();

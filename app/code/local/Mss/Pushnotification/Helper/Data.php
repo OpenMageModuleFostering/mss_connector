@@ -60,7 +60,7 @@ class Mss_Pushnotification_Helper_Data extends Mage_Core_Helper_Abstract
 		$passphrase = Mage::getStoreConfig(self::SEND_IOS_PASSWORD);
        
 		$ctx = stream_context_create();
-		stream_context_set_option($ctx, 'ssl', 'local_cert', Mage::getBaseUrl('media') . Mage::getStoreConfig(self::IOS_PEM));
+		stream_context_set_option($ctx, 'ssl', 'local_cert', Mage::getBaseDir().'/media/pem/'.Mage::getStoreConfig(self::IOS_PEM));
 		stream_context_set_option($ctx, 'ssl', 'passphrase', $passphrase);
 		
 		$ios_mode=(!Mage::getStoreConfig(self::IOS_MODE))?'ssl://gateway.sandbox.push.apple.com:2195':'ssl://gateway.push.apple.com:2195';
@@ -72,7 +72,6 @@ class Mss_Pushnotification_Helper_Data extends Mage_Core_Helper_Abstract
 		if (!$fp)
 			exit("The detail entered for IOS is not correct: $err $errstr" . PHP_EOL);
 
-			echo 'Connected to APNS' . PHP_EOL;
 
 		// Create the payload body
 		$body['aps'] = array(
@@ -116,7 +115,7 @@ class Mss_Pushnotification_Helper_Data extends Mage_Core_Helper_Abstract
 	 
 		$fields = array(
 		    'registration_ids' => $registration_id,
-		    'data' => $this->__($message)
+		    'data' =>$message
 		    
 		);
 	 	
