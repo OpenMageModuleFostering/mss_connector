@@ -6,7 +6,7 @@ class Mss_Bannersliderapp_Helper_Data extends Mage_Core_Helper_Abstract
         if (!$image) {
             return;
         }
-        $name = $this->reImageName($image);
+        //$name = $this->reImageName($image);
         $banner_image_path = Mage::getBaseDir()  . '/media/bannerslider/' . $name;
         if (!file_exists($banner_image_path)) {
             return;

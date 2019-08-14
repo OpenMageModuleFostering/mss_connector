@@ -19,7 +19,7 @@ class Mss_Connector_StaticpagesController extends Mage_Core_Controller_Front_Act
                  if($page):
                     $page_model = Mage::getModel('cms/page')->load($page, 'identifier');
                     $data [] = array('page_title'=>$page_model->getTitle(),
-                                'page_content'=>$processor->filter($page_model->getContent()),
+                                'page_content'=> preg_replace('/<\/?a[^>]*>/','',$processor->filter($page_model->getContent())),
                                 'identifier'=>$page_model->getIdentifier());
                 endif;
             endforeach;

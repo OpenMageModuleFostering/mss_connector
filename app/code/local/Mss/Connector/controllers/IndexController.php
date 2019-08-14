@@ -192,16 +192,22 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 						exit;
 				endif;
 
-				$model = Mage::getModel ( 'catalog/product' ); // getting product model
-				$collection = $category->getProductCollection ()->addAttributeToFilter ( 'status', 1 )
-							->addAttributeToFilter ( 'visibility', array ('neq' => 1 ) );
+				//$model = Mage::getModel ( 'catalog/product' ); // getting product model
+				//$collection = $category->getProductCollection ()->addAttributeToFilter ( 'status', 1 )
+							//->addAttributeToFilter ( 'visibility', array ('neq' => 1 ) );
+				$collection = Mage::getResourceModel('catalog/product_collection')
+				        ->setStoreId(Mage::app()->getStore()->getId())
+				        ->addCategoryFilter($category)
+				        ->addAttributeToFilter('visibility', array ('neq' => 1 ))
+				        ->addAttributeToFilter('status', 1 );
 
 				$price_filter = array();
 
 				/*filter added*/
 				if($this->getRequest ()->getParam ( 'filter' )){
 					$filters = json_decode($this->getRequest ()->getParam ( 'filter' ),1);
-
+					$resource = Mage::getSingleton('core/resource');
+					$connection = $resource->getConnection('core_read');
 					
 					foreach($filters as $key => $filter):
 						
@@ -211,10 +217,33 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 								
 								$price = explode(',',$filter[0]);
 								$price_filter = array('0'=>$price['0'],'1'=>$price['1']);
-							    $collection = $collection->addAttributeToFilter ( 'price', array ('gt' => $price['0'] ) );
-								$collection = $collection->addAttributeToFilter ( 'price', array ('lt' => $price['1']) );
+							   	$collection->addFinalPrice();
+
+								$collection->addPriceDataFieldFilter('%s <= %s', ['final_price', $price['0']]);
+								$collection->addPriceDataFieldFilter('%s >= %s', ['final_price', $price['1']]);
 							else:
-								$collection = $collection->addAttributeToFilter ( $key, array('in' => $filter) );
+							    $tableAlias = $key . '_idx';
+						        $attributeModel = Mage::getModel('eav/entity_attribute')->getCollection()->addFieldToFilter('attribute_code', $key );
+
+						        if($attributeModel)
+						        {
+						        	$attributeId  = $attributeModel->getFirstItem()->getId();
+						        } else {
+						        	continue;
+						        }
+
+						        $conditions = array(
+						            "{$tableAlias}.entity_id = e.entity_id",
+						            $connection->quoteInto("{$tableAlias}.attribute_id = ?", $attributeId),
+						            $connection->quoteInto("{$tableAlias}.store_id = ?", $collection->getStoreId()),
+						            $connection->quoteInto("{$tableAlias}.value = ?", $filter[0])
+						        );
+						        $collection->getSelect()->join(
+						            array($tableAlias => 'catalog_product_index_eav'),
+						            implode(' AND ', $conditions),
+						            array()
+						        );
+						        
 							endif;
 						endif;
 					endforeach;
@@ -513,7 +542,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 
 			if(sizeof($price_filter)):
 
-				if($product->getFinalPrice() > $price_filter['0'] AND $product->getFinalPrice() < $price_filter['1']):
+				if($product->getFinalPrice() >= $price_filter['0'] AND $product->getFinalPrice() <= $price_filter['1']):
 				
 					$productlist [] = array (
 						'entity_id' => $product->getId (),
@@ -630,7 +659,11 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 					
 						$product = Mage::getModel ( 'catalog/product' )->load ( $product ['entity_id'] );
 						$rating = Mage::getModel('rating/rating')->getEntitySummary($product->getId());
-						$rating_final = ($rating->getSum()/$rating->getCount())/20;
+						if($rating->getCount()){
+							$rating_final = ($rating->getSum()/$rating->getCount())/20;
+						} else {
+							$rating_final = ($rating->getSum())/20;
+						}
 
 					if($product->getTypeId() == "configurable")
 						$qty = Mage::helper('connector')->getProductStockInfoById($product->getId());
@@ -686,8 +719,8 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 
 
 			$now = date('Y-m-d');
-			$newsFrom= substr($_productCollection->getData('news_from_date'),0,10);
-			$newsTo=  substr($_productCollection->getData('news_to_date'),0,10);
+			$newsFrom= @substr($_productCollection->getData('news_from_date'),0,10);
+			$newsTo=  @substr($_productCollection->getData('news_to_date'),0,10);
 
 			Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($_productCollection);
 			

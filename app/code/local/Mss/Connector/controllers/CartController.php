@@ -725,7 +725,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			$cartItemArr ['thumbnail_pic_url'] = Mage::helper('connector')-> Imageresize($product_model->load($item->getProduct ()->getId ())->getImage()
                     ,'thumbnail','100','100');
 			$cartItemArr ['custom_option'] = $this->_getCustomOptions ( $item );
-			$cartItemArr ['item_price'] =  number_format ( $item->getPriceInclTax(), 2, '.', '' );
+			//$cartItemArr ['item_price'] =  number_format ( $item->getPriceInclTax(), 2, '.', '' );
+			$cartItemArr ['item_price'] =  number_format ( $item->getPrice(), 2, '.', '' );
 			array_push ( $cartItemsArr, $cartItemArr );
 		}
 		

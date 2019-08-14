@@ -4,7 +4,7 @@ class Mss_Sociallogin_Helper_Data extends Mage_Core_Helper_Abstract
 
 	private $sociallogin_support = 	array('facebook','google');
 	private $f_url = 'https://graph.facebook.com/me?fields=first_name,last_name,gender,email&format=json&access_token=';
-    private $g_url = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json&alt=json&access_token=';
+    private $g_url = 'https://www.googleapis.com/oauth2/v3/tokeninfo?alt=json&id_token=';
 	private $sociallogin_type;
 
 	public function socialloginRequest($token,$sociallogintype){

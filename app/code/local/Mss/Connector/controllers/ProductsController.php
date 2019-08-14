@@ -572,7 +572,7 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 	  		    ->setPageSize ($limit)
 				->addAttributeToFilter(array(
 	                array('attribute'=>'name', 'like' => '%'.$searchstring.'%'),
-	              // array('attribute'=>'description', 'like'  => '%'.$searchstring.'%'),
+	               array('attribute'=>'sku', 'like'  => '%'.$searchstring.'%'),
 	            ))
 			    ->addAttributeToFilter ( 'status', 1 )
 				->addAttributeToFilter ( 'visibility', array ('neq' => 1 ) )

@@ -81,8 +81,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			$session->logout ();
 		}
 		$username = Mage::app ()->getRequest ()->getParam ( 'username' );
-	    $password = Mage::app ()->getRequest ()->getParam ( 'password' );
-		 
+	    $password = base64_decode(Mage::app ()->getRequest ()->getParam ( 'password' ));
 		try {
 			if (!$session->login ( $username, $password )) {
 				echo json_encode(array('status' => 'error','message'=> $this->__('wrong username or password.')));
@@ -96,7 +95,8 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			switch ($e->getCode ()) {
 				case Mage_Customer_Model_Customer::EXCEPTION_EMAIL_NOT_CONFIRMED :
 					$value = Mage::helper ( 'customer' )->getEmailConfirmationUrl ( $username );
-					$message = Mage::helper ( 'customer' )->__ ( 'This account is not confirmed. <a href="%s">Click here</a> to resend confirmation email.', $value );
+					// $message = Mage::helper ( 'customer' )->__ ( 'This account is not confirmed. <a href="%s">Click here</a> to resend confirmation email.', $value );
+					$message = Mage::helper( 'customer' )->__ ( 'This account is not confirmed.Please check your registered email.', $value );
 					echo json_encode ( array (
 							'status' => 'error',
 							'message' =>  $this->__($message )
@@ -182,7 +182,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		} catch ( Mage_Core_Exception $e ) {
 			if ($e->getCode () === Mage_Customer_Model_Customer::EXCEPTION_EMAIL_EXISTS) {
 				$url = Mage::getUrl ( 'customer/account/forgotpassword' );
-				$message = $this->__( 'There is already an account with this email address. If you are sure that it is your email address, <a href="%s">click here</a> to get your password and access your account.', $url );
+				$message = Mage::helper ( 'customer' )->__ ( 'This account is not confirmed.Please check your registered email.', $value );
 				$session->setEscapeMessages ( false );
 			} else {
 				$message = $this->__($e->getMessage ());
