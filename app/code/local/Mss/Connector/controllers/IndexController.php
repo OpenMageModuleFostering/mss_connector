@@ -465,9 +465,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 							$baseCurrency, $currentCurrency ), 2, '.', '' ),
 					'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 					'qty'=>(int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty(),
+					'product_type'=>$product->getTypeId(),
 					'rating' => $rating_final,
 					'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-					'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
+					'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
 
 			);
 		}
@@ -523,7 +524,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 						'news_to_date' => $product->getNewsToDate (),
 						'special_from_date' => $product->getSpecialFromDate (),
 						'special_to_date' => $product->getSpecialToDate (),
-						'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
+						'image_url' => Mage::helper('connector')-> Imageresize($product->getImage()?:$product->getSmallImage(),'product','300','300'),
 						'url_key' => $product->getProductUrl (),
 						'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
 						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( 
@@ -532,9 +533,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 										$baseCurrency, $currentCurrency ), 2, '.', '' ),
 						'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 						'qty'=>$qty,
+						'product_type'=>$product->getTypeId(),
 						'rating' => $rating_final,
 						'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-						'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
+						'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
 					);
 				endif;
 			else:
@@ -547,7 +549,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 					'news_to_date' => $product->getNewsToDate (),
 					'special_from_date' => $product->getSpecialFromDate (),
 					'special_to_date' => $product->getSpecialToDate (),
-					'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
+					'image_url' => Mage::helper('connector')-> Imageresize($product->getImage()?:$product->getSmallImage(),'product','300','300'),
 					'url_key' => $product->getProductUrl (),
 					'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
 					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( 
@@ -556,9 +558,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 							$baseCurrency, $currentCurrency ), 2, '.', '' ),
 					'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 					'qty'=>$qty,
+					'product_type'=>$product->getTypeId(),
 					'rating' => $rating_final,
 					'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-					'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
+					'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
 				);
 			endif;
 		endforeach;
@@ -652,9 +655,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 											$baseCurrency, $currentCurrency ), 2, '.', '' ),
 							'symbol'=>Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 							'qty'=>$qty,
+							'product_type'=>$product->getTypeId(),
 							'rating' => $rating_final,
 							'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-							'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
+							'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
 					);
 				}
 			return $new_productlist;
@@ -726,9 +730,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 							$baseCurrency, $currentCurrency ), 2, '.', '' ),
 						'symbol'=>Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 						'qty'=>$qty,
+						'product_type'=>$product->getTypeId(),
 						'rating' => $rating_final,
 						'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-						'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
+						'specialprice'=>number_format (Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()), 2, '.', '' ),
 				);
 			}
 	

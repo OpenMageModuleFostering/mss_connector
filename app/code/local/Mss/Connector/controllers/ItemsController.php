@@ -85,6 +85,7 @@ class Mss_Connector_ItemsController extends Mage_Core_Controller_Front_Action {
 					'image_url' => $product->getImageUrl (),
 					'url_key' => $product->getProductUrl (),
 					'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
+					'product_type'=>$product->getTypeId(),
 					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getSpecialPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
 					'symbol' => Mage::app ()->getLocale ()->currency ( Mage::app ()->getStore ()->getCurrentCurrencyCode () )->getSymbol () 
 			);

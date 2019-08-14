@@ -91,8 +91,8 @@ if(isset($order_id)):
       $posted['surl'] = $this->getUrl('payu/index/success');
       $posted['furl'] = $this->getUrl('payu/index/failure');
       $posted['service_provider'] = 'payu_paisa';
- $posted['txnid'] = $order_id;
-  $posted['website'] = Mage::getBaseUrl();
+      $posted['txnid'] = $order_id;
+      $posted['website'] = Mage::getBaseUrl();
       $posted['lastname']= $order->getShippingAddress()->getLastname();
       $posted['address1'] =  $street;
       $posted['address2'] =  $street;
@@ -196,8 +196,8 @@ if(isset($order_id)):
     </tr>
 
 
-<input name="service_provider" value="<?php echo (empty($posted['txnid'])) ? '' : $posted['txnid'] ?>" size="64" />
-<input name="service_provider" value="<?php echo (empty($posted['website'])) ? '' : $posted['website'] ?>" size="64" />
+<input name="txnid" value="<?php echo (empty($posted['txnid'])) ? '' : $posted['txnid'] ?>" size="64" />
+<input name="website" value="<?php echo (empty($posted['website'])) ? '' : $posted['website'] ?>" size="64" />
 
 
 

@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+  <bannersliderapp_adminhtml_bannersliderapp_index>
+	<reference name="content">
+	  <block type="bannersliderapp/adminhtml_grid" name="bannersliderapp" />
+	</reference>
+  </bannersliderapp_adminhtml_bannersliderapp_index>
+</layout>

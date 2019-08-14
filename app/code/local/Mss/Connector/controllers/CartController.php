@@ -40,15 +40,25 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	}
 
 	public function getMinimumorderAction(){
+		$data = $this->getRequest()->getParams();
+		$cart_data = json_decode($data['cart_data'],1);
 
-		$cart_data = json_decode($this->getRequest ()->getParam('cart_data'),1);
+		foreach ($cart_data['items'] as $key => $value) {
+			
+			if($value['custom_image_name']) {  
+				$datas = base64_decode($value['custom_image']);
+		    	file_put_contents(Mage::getBaseDir().'/tmp/'.$cart_data['custom_image_name'], $datas);
 
-		
-		if(!sizeof($cart_data)):
+	            $_FILES['options_'.$value['attribute_id'].'_file'] = array ( 'name' => $value['custom_image_name'], 'type' => "image/jpeg" ,"tmp_name" =>  Mage::getBaseDir().'/tmp/'.$value['custom_image_name'] ,"error" => 0 ,"size" => getimagesize(Mage::getBaseDir().'/tmp/'.$value['custom_image_name']),'app'=>true );
+			    $value['options_'.$value['attribute_id'].'_file_action'] = 'save_new';
+			    $value['uenc']='aHR0cDovL21hc3RlcnNvZnR3YXJldGVjaG5vbG9naWVzLmNvbS9tbXNfZGV2ZWxvcG1lbnQvZGVmYXVsdC90ZXN0LXByb2R1Y3QuaHRtbA';
+			}
+		}
+		/*if(!sizeof($value)):
 			echo json_encode(array('status'=>'error','message'=> $this->__('Nothing to add in cart, cart is empty.')));
 			exit;
 		endif;
-
+*/
 		$cart = Mage::helper ( 'checkout/cart' )->getCart ();
 		$cart->truncate();
 
@@ -57,14 +67,13 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				'name' => 'frontend' 
 		) );
 	
-		foreach($cart_data as $params):
-
-
+		foreach($cart_data['items'] as $params):
+			
 			try {
 			
 				
 				$product = Mage::getModel ('catalog/product')->load ($params['product']);
-				
+
 				if ($product->getData('has_options')):
 					# validate options
 					$options=$params['options'];		
@@ -213,26 +222,54 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 					'name' => 'frontend' 
 			) );
 			$cart = Mage::helper ( 'checkout/cart' )->getCart ();
-			
-			
-			if (isset ( $params ['super_attribute'] )) :
+			/*bundle product code start*/
+			 
+			 
+			if (isset ($params['bundle_option']) ){
 
-				if(isset($params['options'])):
+				if(isset($params['options'])) {  
+				 	$params = array("product"=>$params ['product'],"options"=>$params['options'],
+						"bundle_option"=>json_decode($params['bundle_option'],1),'qty' => $params ['qty']);
+				 }else{   
+						$params = array("product"=>$params ['product'],
+						"bundle_option"=>json_decode($params['bundle_option'],1),'qty' => $params ['qty']);
+				}	
+					$cart->addProduct ( $product,$params);
+			}elseif (isset ( $params ['super_attribute'] )) {
+
+   
+				if(isset($params['options'])) {
+
+					
+
 					$params = array("product"=>$params ['product'],"options"=>$params['options'],"super_attribute"=>json_decode($params ['super_attribute'],1),
-						'qty' => $params ['qty']	
+						'qty' => $params ['qty']
 					);
-				else:
-					$params = array("product"=>$params ['product'],"super_attribute"=>json_decode($params ['super_attribute'],1),
-						'qty' => $params ['qty']	
-					);
-				endif;	
 
+				}else{ 
+					$params = array("product"=>$params ['product'],"super_attribute"=>json_decode($params ['super_attribute'],1),
+						'qty' => $params ['qty']
+					);
+				}
 				$cart->addProduct ( $product,$params);
-			
-			else:
+			}else{
+				if($params['custom_image_name']) { // die('log');
 				
-				$cart->addProduct ( $product, $params );
-			endif;
+					$data = base64_decode($params['custom_image']);
+			    	file_put_contents(Mage::getBaseDir().'/tmp/'.$params['custom_image_name'], $data);
+
+		            $_FILES['options_'.$params['attribute_id'].'_file'] = array ( 'name' => $params['custom_image_name'], 'type' => "image/jpeg" ,"tmp_name" =>  Mage::getBaseDir().'/tmp/'.$params['custom_image_name'] ,"error" => 0 ,"size" => getimagesize(Mage::getBaseDir().'/tmp/'.$params['custom_image_name']),'app'=>true );
+
+				    //$params ='';
+				    //$params['product'] = $product_id;
+				    $options['options_'.$params['attribute_id'].'_file_action'] = 'save_new';
+				    $params['options_'.$params['attribute_id'].'_file_action'] = 'save_new';
+				    $params['uenc']='aHR0cDovL21hc3RlcnNvZnR3YXJldGVjaG5vbG9naWVzLmNvbS9tbXNfZGV2ZWxvcG1lbnQvZGVmYXVsdC90ZXN0LXByb2R1Y3QuaHRtbA';
+				   // $params['qty'] = 1;
+				    //$result['data'] = $params;
+				}
+				$cart->addProduct ( $product, $params);
+			}
 
 			
 				$session->setLastAddedProductId ( $product->getId () );
@@ -417,7 +454,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		
 		if (! $cart->getItemsCount ()) {
 			echo json_encode ( array (
-					'code' => '0X0001',
+					'status' => 'error',
 					'message' => $this->__("You can't use coupon code with an empty shopping cart" 
 			) ));
 			return false;
@@ -428,7 +465,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		$oldCouponCode = $cart->getQuote ()->getCouponCode ();
 		if (! strlen ( $couponCode ) && ! strlen ( $oldCouponCode )) {
 			echo json_encode ( array (
-					'code' => '0X0002',
+					'status' => 'error',
 					'message' => "Emptyed." 
 			) );
 			return false;
@@ -443,29 +480,29 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			if ($codeLength) {
 				if ($isCodeLengthValid && $couponCode == $cart->getQuote ()->getCouponCode ()) {
 					$messages = array (
-							'code' => '0x0000',
+							'status' => 'true',
 							'message' => $this->__ ( 'Coupon code "%s" was applied.', Mage::helper ( 'core' )->escapeHtml ( $couponCode ) ) 
 					);
 				} else {
 					$messages = array (
-							'code' => '0x0001',
+							'status' => 'error',
 							'message' => $this->__ ( 'Coupon code "%s" is not valid.', Mage::helper ( 'core' )->escapeHtml ( $couponCode ) ) 
 					);
 				}
 			} else {
 				$messages = array (
-						'code' => '0x0002',
+						'status' => 'error',
 						'message' => $this->__ ( 'Coupon code was canceled.' ) 
 				);
 			}
 		} catch ( Mage_Core_Exception $e ) {
 			$messages = array (
-					'code' => '0x0003',
+					'status' => 'error',
 					'message' => $e->getMessage () 
 			);
 		} catch ( Exception $e ) {
 			$messages = array (
-					'code' => '0x0004',
+					'status' => 'error',
 					'message' => $this->__ ( 'Cannot apply the coupon code.' ) 
 			);
 		}
@@ -967,13 +1004,11 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 							try {
 								$addressData=Mage::getModel('customer/address')->load($addressId)->getData();
 								$quote=Mage::getSingleton ( 'checkout/session' )->getQuote();
-								//$quote->setMms_order_type('app')->save();
+								$quote->setMms_order_type('app')->save();
 
 								$billingAddress = $quote->getBillingAddress()->addData($addressData);
 								$shippingAddress = $quote->getShippingAddress()->addData($addressData);
-								 
-								$shippingAddress->setCollectShippingRates(true)->collectShippingRates()
-								                ->setShippingMethod($shipping_method);
+								$shippingAddress->setCollectShippingRates(true)->setShippingMethod($shipping_method);
 
 								if($paymentmethod != 'authorizenet'):
 									$shippingAddress->setPaymentMethod($paymentmethod);
@@ -1001,8 +1036,11 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 
 								$service = Mage::getModel('sales/service_quote', $quote);
+
 								$service->submitAll();
 								$order = $service->getOrder();
+								$items = $order->getAllItems();
+								$itemcount = count($items);
 								$order->setMms_order_type('app')->save();
 								$order->sendNewOrderEmail();
 								$quote->delete();
@@ -1015,7 +1053,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 								 $result=array(	'message'=>$this->__('Order placed successfully.'),
 								 				'orderid'=>$order->getIncrementId(),
-															'result'=>'success'
+								 				'items_count'=>$itemcount,
+								 				'result'=>'success'
 
 													);
 															
@@ -1041,7 +1080,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			}else{
 
 					
-					ini_set('memory_limit', '128M');
+			ini_set('memory_limit', '128M');
 
 					$getParams = $this->getRequest()->getParams();
 				
@@ -1063,7 +1102,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 						endif;
 
 						$checkout_session =Mage::getModel ( 'checkout/session' )->getQuoteId();
-						//Mage::getSingleton ( 'checkout/session' )->getQuote()->setMms_order_type('app')->save();
+						Mage::getSingleton ( 'checkout/session' )->getQuote()->setMms_order_type('app')->save();
 
 						$quote = Mage::getModel('sales/quote')->load($checkout_session);
 						$quote->setStoreId(Mage::app()->getStore()->getId());
@@ -1096,14 +1135,11 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 						else
 							$billingAddress['region_id']=$getParams['region_id'];
 						
-						$quote->getBillingAddress()
-						        ->addData($billingAddress);
+						$quote->getBillingAddress()->addData($billingAddress);
 
-						 $quote->getShippingAddress()
-					            ->addData($billingAddress)
-					            ->setShippingMethod($shipping_method);
+						$quote->getShippingAddress()->addData($billingAddress)->setShippingMethod($shipping_method);
 					         							
-						$quote->getShippingAddress()->setCollectShippingRates(true)->collectShippingRates();
+						$quote->getShippingAddress()->setCollectShippingRates(true);
 						$quote->collectTotals();
 							 
 					    if($payment_method != 'authorizenet'):
@@ -1133,7 +1169,9 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				        $order = $service->getOrder();
 				        $order->setMms_order_type('app')->save();
 				        $order->sendNewOrderEmail();
-				     
+				        $items = $order->getAllItems();
+						$itemcount = count($items);
+		     
      					$increment_id = $order->getRealOrderId();	 				
 						$quote = $customer = $service = null;
 
@@ -1143,7 +1181,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 							Mage::getSingleton('checkout/cart')->truncate()->save();
 						}
 						Mage::getSingleton('checkout/session')->clear();
-						echo json_encode(array('status' =>'success','orderid' => $increment_id));
+						echo json_encode(array('status' =>'success','orderid' => $increment_id,'items_count'=>$itemcount));
 						exit;
 				}
 				catch (Exception $e) 

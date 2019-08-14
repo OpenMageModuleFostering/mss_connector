@@ -94,36 +94,34 @@ class Mss_Connector_StoreinfoController extends Mage_Core_Controller_Front_Actio
 		public function getstoredataAction() {
 		
 		$basicinfo = array ();
-		$website_id = Mage::app()->getStore()->getWebsiteId();
-		$website = Mage::app ()->getWebsite($website_id);
+        $website_id = Mage::app()->getStore()->getWebsiteId();
+        $website = Mage::app ()->getWebsite($website_id);
 
-		foreach($website->getGroups() as $key=> $group):
+        foreach($website->getGroups() as $key=> $group):
 
-			$stores = $group->getStores();
-			
-			foreach ( $stores as $key =>$view)
-				$store_view[]= [
-						'name' => $view->getName(),
-						'view_id' => $view->getStoreId(),
-						'store_url' => $view->getUrl(),
-						'store_code'=> Mage::getStoreConfig(self::XML_DEFAULT_STORE_LANG, $view->getStoreId()),
-						'store_name'=> $view->getName(),
-						'sort_order' => $view->getSortOrder(),
-						'is_active' => $view->getIsActive()
-				];
+        $stores = $group->getStores();
+        $store_view  = array();
+        $new_array = array();
+        foreach ($stores as $key => $view) {
+            $store_view['name'] = $view->getName();
+            $store_view['view_id'] = $view->getStoreId();
+            $store_view['store_url'] = $view->getUrl();
+            $store_view['store_code']= Mage::getStoreConfig(self::XML_DEFAULT_STORE_LANG, $view->getStoreId());
+            $store_view['store_name']= $view->getName();
+            $store_view['sort_order'] = $view->getSortOrder();
+            $store_view['is_active'] = $view->getIsActive();
+            array_push($new_array, $store_view);
+        }
+            $basicinfo[]=array(
+                        'store' => $group->getName(),
+                        'store_id' => $group->getGroupId(),
+                        'root_category_id' => $group->getRootCategoryId(),
+                        'view'=>$new_array
+                        );
 
-			$basicinfo[]=[
-						'store' => $group->getName(),
-						'store_id' => $group->getGroupId(),
-						'root_category_id' => $group->getRootCategoryId(),
-						'view'=>$store_view
-						];
-
-			$store_view ='';
-
-		endforeach;
-	echo json_encode($basicinfo);
-		
+            $store_view ='';
+        endforeach;
+    	echo json_encode($basicinfo);
 	}
 
 	/*
@@ -154,9 +152,9 @@ class Mss_Connector_StoreinfoController extends Mage_Core_Controller_Front_Actio
 
                 foreach ($codes as $code):
                     if(isset($rates[$code]))
-                        $currencies[] =['name'=> Mage::app()->getLocale()
+                        $currencies[] =array('name'=> Mage::app()->getLocale()
                             ->getTranslation($code, 'nametocurrency'),'code'=>$code,
-                            'symbol'=>Mage::app()->getLocale()->currency($code)->getSymbol()];
+                            'symbol'=>Mage::app()->getLocale()->currency($code)->getSymbol());
                         
                     
                 endforeach;

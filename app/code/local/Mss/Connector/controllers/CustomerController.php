@@ -514,7 +514,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
            		if($states->getData()):
 					$countriesArray[]=array('value'=>$country['value'],'name'=>$country['label'],'state'=>$states->getData());
 				else:
-					$countriesArray[]=array('value'=>$country['value'],'name'=>$country['label'],'state'=>[]);
+					$countriesArray[]=array('value'=>$country['value'],'name'=>$country['label'],'state'=>array());
 				endif;
 
 				
