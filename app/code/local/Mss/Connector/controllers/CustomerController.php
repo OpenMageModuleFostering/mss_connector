@@ -88,7 +88,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				exit;
 			} else {
 
-				echo json_encode(array('status' => 'success','message'=>$this->__($this->statusAction ())));
+				echo json_encode(array('status' => 'success','message'=>$this->statusAction ()));
 				exit;
 			}
 		} catch ( Mage_Core_Exception $e ) {
@@ -195,7 +195,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 					false,
 					'0x1000',
 					array (
-							$this->__($message )
+							$message
 					) 
 			) );
 		} catch ( Exception $e ) {

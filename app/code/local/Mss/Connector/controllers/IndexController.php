@@ -462,10 +462,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 					'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
 					'url_key' => $product->getProductUrl (),
 					'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
-													Mage::helper('connector')
-													->getFinalPriceByProductId($product->getId ()),
-													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( 
+							Mage::helper('tax')->getPrice($product, $product->getFinalPrice(), 
+							true, null, null, null, null, false),
+							$baseCurrency, $currentCurrency ), 2, '.', '' ),
 					'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 					'qty'=>(int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty(),
 					'rating' => $rating_final,
@@ -529,10 +529,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 						'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
 						'url_key' => $product->getProductUrl (),
 						'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
-													Mage::helper('connector')
-													->getFinalPriceByProductId($product->getId ()),
-													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( 
+										Mage::helper('tax')->getPrice($product, $product->getFinalPrice(), 
+										true, null, null, null, null, false),
+										$baseCurrency, $currentCurrency ), 2, '.', '' ),
 						'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 						'qty'=>$qty,
 						'rating' => $rating_final,
@@ -553,10 +553,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 					'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
 					'url_key' => $product->getProductUrl (),
 					'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
-													Mage::helper('connector')
-													->getFinalPriceByProductId($product->getId ()),
-													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( 
+							Mage::helper('tax')->getPrice($product, $product->getFinalPrice(), 
+							true, null, null, null, null, false),
+							$baseCurrency, $currentCurrency ), 2, '.', '' ),
 					'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 					'qty'=>$qty,
 					'rating' => $rating_final,
@@ -649,10 +649,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 							'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
 							'url_key' => $product->getProductUrl (),
 							'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-							'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
-													Mage::helper('connector')
-													->getFinalPriceByProductId($product->getId ()),
-													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+							'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( 
+											Mage::helper('tax')->getPrice($product, $product->getFinalPrice(), 
+											true, null, null, null, null, false),
+											$baseCurrency, $currentCurrency ), 2, '.', '' ),
 							'symbol'=>Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 							'qty'=>$qty,
 							'rating' => $rating_final,
@@ -723,10 +723,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 						'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
 						'url_key' => $product->getProductUrl (),
 						'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
-													Mage::helper('connector')
-													->getFinalPriceByProductId($product->getId ()),
-													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( 
+							Mage::helper('tax')->getPrice($product, $product->getFinalPrice(), 
+							true, null, null, null, null, false),
+							$baseCurrency, $currentCurrency ), 2, '.', '' ),
 						'symbol'=>Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 						'qty'=>$qty,
 						'rating' => $rating_final,

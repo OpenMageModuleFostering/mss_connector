@@ -302,9 +302,22 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			return $e;		
 		}
 	}
+
+	/*
+	*	URL : baseurl/restapi/cart/getcartinfo/
+	*	Controller : cart
+	*	Action : getcartinfo
+	*	Method : GET
+	*	Request Parameters :  address_id , region_id  , country_id
+	*	Parameter Type : 
+	*	Response : JSON
+	*
+	*/
+
 	public function getCartInfoAction() {
-		echo json_encode ( $this->_getCartInformation () );
-	}
+
+	     echo json_encode ( $this->_getCartInformation () );
+ 	}
 	public function removeAction() {
 		$cart = Mage::getSingleton ( 'checkout/cart' );
 		$id = ( int ) $this->getRequest ()->getParam ( 'cart_item_id', 0 );
@@ -328,7 +341,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		}
 	}
 
-
+ 
 	public function updateAction() {
 		$itemId = ( int ) $this->getRequest ()->getParam ( 'cart_item_id', 0 );
 		$qty = ( int ) $this->getRequest ()->getParam ( 'qty', 0 );
@@ -461,14 +474,65 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	}
 
 
+
+
+	protected function _getShippingTotal(){
+
+	 	$addressId = $this->getRequest()->getParam('address_id');
+	 	$countryId = $this->getRequest()->getParam('country_id');
+	 	$setRegionId = $this->getRequest()->getParam('region_id');
+		if (isset($addressId)){
+			$customer = Mage::getModel('customer/address')
+		    ->load($addressId);
+		    $countryId = $customer['country_id'];
+		    $setRegionId = $customer['region_id'];
+		    $regionName = $customer['region'];
+	        $quote=Mage::getSingleton ( 'checkout/cart' )->getQuote();
+	        if (isset($setRegionId)){
+	        $quote->getShippingAddress()
+	              ->setCountryId($countryId)
+	              ->setRegionId($setRegionId)
+	              ->setCollectShippingRates(true);
+	        } else {
+			$quote->getShippingAddress()
+	              ->setCountryId($countryId)
+	              ->setRegion($regionName)
+	              ->setCollectShippingRates(true);	        	
+	        }
+	        $quote->save();
+	        $quote->getShippingAddress()->setShippingMethod('flatrate_flatrate')->save();
+	        $amount=$quote->getShippingAddress();
+	        $shipping_amount = $amount['shipping_incl_tax'];
+	        return  $shipping_amount;
+        } else {
+        	$quote=Mage::getSingleton ( 'checkout/cart' )->getQuote();
+        	if (isset($setRegionId)){
+	        $quote->getShippingAddress()
+	              ->setCountryId($countryId)
+	              ->setRegionId($setRegionId)
+	              ->setCollectShippingRates(true);
+	        } else {  
+	        $quote->getShippingAddress()
+	              ->setCountryId($countryId)
+	              ->setCollectShippingRates(true);	
+	        }
+	        $quote->save();
+	        $quote->getShippingAddress()->setShippingMethod('flatrate_flatrate')->save();
+	        $amount=$quote->getShippingAddress();
+	        $shipping_amount = $amount['shipping_incl_tax'];
+	        return $shipping_amount;
+        }
+	}
+
 	protected function _getCartInformation() {
+
+		$shipping_amount = $this->_getShippingTotal();
 		$cart = Mage::getSingleton ( 'checkout/cart' );
 		if ($cart->getQuote ()->getItemsCount ()) {
 			$cart->init ();
 			$cart->save ();
 		}
-		$cart->getQuote ()->collectTotals ()->save ();
-
+	 	$cart->getQuote ()->collectTotals ()->save ();
 		$cartInfo = array ();
 		$cartInfo ['is_virtual'] = Mage::helper ( 'checkout/cart' )->getIsVirtualQuote ();
 		$cartInfo ['cart_items'] = $this->_getCartItems ();
@@ -477,6 +541,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		$cartInfo ['grand_total'] = number_format ( $cart->getQuote()->getGrandTotal(), 2, '.', '' );
 		$cartInfo ['sub_total'] = number_format ( $cart->getQuote()->getSubtotal(), 2, '.', '' );
 		$cartInfo ['allow_guest_checkout'] = Mage::helper ( 'checkout' )->isAllowedGuestCheckout ( $cart->getQuote () );
+		$cartInfo ['shipping_amount'] = $shipping_amount;
 		
 		return $cartInfo;
 	}
@@ -571,6 +636,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		$product_model = Mage::getModel ( 'catalog/product' );
 
 		foreach ( $items as $item ) {
+			$product = $product_model->load($item->getProduct()->getId());
 			$cartItemArr = array ();
 			$cartItemArr ['cart_item_id'] = $item->getId ();
 			$cartItemArr ['currency'] = Mage::helper('connector')->getCurrencysymbolByCode($this->currency);
@@ -581,15 +647,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			$cartItemArr ['thumbnail_pic_url'] = Mage::helper('connector')-> Imageresize($product_model->load($item->getProduct ()->getId ())->getImage()
                     ,'thumbnail','100','100');
 			$cartItemArr ['custom_option'] = $this->_getCustomOptions ( $item );
-					
-			$cartItemArr ['item_price'] = number_format ( Mage::helper ( 'directory' )
-								->currencyConvert ( 
-									Mage::helper('connector')
-									->getFinalPriceByProductId(
-										$item->getProduct()->getId())?:$item->getProduct()->getPrice(), 
-									$baseCurrency, 
-									$currentCurrency ), 2, '.', '' );
-			
+			$cartItemArr ['item_price'] =  number_format ( $item->getPriceInclTax(), 2, '.', '' );
 			array_push ( $cartItemsArr, $cartItemArr );
 		}
 		
@@ -1248,7 +1306,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
                   $productName['qty'] = $item->getQty();              
                   $productName['Name'] = $item->getProduct()->getName();
                   /*$productName['Price'] = $item->getPrice()* $item->getQty();*/
-                  $productName['Price'] = number_format ( Mage::helper ( 'directory' )->currencyConvert ( $item->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' );
+                  $productName['Price'] = number_format ( Mage::helper ( 'directory' )->currencyConvert ( $item->getPriceInclTax(), 			$baseCurrency, $currentCurrency ), 2, '.', '' );
+
                   $productName['image'] =Mage::helper('connector')-> Imageresize($product_model->load($item->getProductId())->getImage()
                     ,'thumbnail','100','100');
 			$productName['wishlist'] =  Mage::helper('connector')->check_wishlist($item->getProductId());    
@@ -1296,7 +1355,9 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	                  $productName['qty'] = $item->getQty();              
 	                  $productName['Name'] = $item->getProduct()->getName();
 	                  /*$productName['Price'] = $item->getPrice()* $item->getQty();*/
-	                  $productName['Price'] = number_format ( Mage::helper ( 'directory' )->currencyConvert ( $item->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' );
+	                  $productName['Price'] = number_format ( Mage::helper ( 'directory' )->currencyConvert ( $item->getPriceInclTax(), 			$baseCurrency, $currentCurrency ), 2, '.', '' );
+
+
 	                  $productName['image'] =Mage::helper('connector')-> Imageresize($product_model->load($item->getProductId())->getImage()
 	                    ,'product','100','100');  
 	                          

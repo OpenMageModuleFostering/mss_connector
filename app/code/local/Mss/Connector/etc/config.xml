@@ -2,7 +2,7 @@
   <config>
      <modules>
         <Mss_Connector>
-          <version>2.0.0</version>
+          <version>2.1.0</version>
         </Mss_Connector>
      </modules>
      <frontend>
@@ -90,4 +90,15 @@
         </updates>  
       </layout> 
     </adminhtml>
+    <admin>
+    <routers>
+      <connector>
+        <use>admin</use>
+        <args>
+          <module>Mss_Connector</module>
+          <frontName>admin_support</frontName>
+        </args>
+      </connector>
+    </routers>
+  </admin>
 </config>

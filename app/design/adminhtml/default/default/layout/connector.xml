@@ -5,4 +5,9 @@
             <block type="connector/adminhtml_notifications" name="connector_notifications" template="connector/notification.phtml"/>
         </reference>
     </default>
+	<connector_adminhtml_support_support>
+		<reference name="content">
+		  <block type="connector/adminhtml_support" name="connector_support" template="connector/support.phtml"/>
+		</reference>
+	</connector_adminhtml_support_support>
 </layout>
