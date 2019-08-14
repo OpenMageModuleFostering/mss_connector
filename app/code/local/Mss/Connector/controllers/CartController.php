@@ -8,11 +8,22 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	public $cc_year = '';
 	public $cc_cid ='';
 
+	public $storeId = "1";
+	public $viewId = "";
+	public $currency = "";
+
 	public function _construct(){
 
 		header('content-type: application/json; charset=utf-8');
 		header("access-control-allow-origin: *");
 		Mage::helper('connector')->loadParent(Mage::app()->getFrontController()->getRequest()->getHeader('token'));
+
+		$this->storeId = Mage::app()->getFrontController()->getRequest()->getHeader('storeId');
+		$this->viewId = Mage::app()->getFrontController()->getRequest()->getHeader('viewId');
+		$this->currency = Mage::app()->getFrontController()->getRequest()->getHeader('currency');
+		
+		Mage::app()->setCurrentStore($this->storeId);
+		
 		parent::_construct();
 		
 	}
@@ -34,14 +45,14 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 		
 		if(!sizeof($cart_data)):
-			echo json_encode(array('status'=>'error','message'=> 'Nothing to add in cart, cart is empty.'));
+			echo json_encode(array('status'=>'error','message'=> $this->__('Nothing to add in cart, cart is empty.')));
 			exit;
 		endif;
 
 		$cart = Mage::helper ( 'checkout/cart' )->getCart ();
 		$cart->truncate();
+
 		
-	
 		$session = Mage::getSingleton ( 'core/session', array (
 				'name' => 'frontend' 
 		) );
@@ -94,8 +105,18 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 
 		endforeach;
-		$session->setCartWasUpdated ( true );
-			$cart->save ();
+		try{
+			$session->setCartWasUpdated ( true );
+			
+			$cart->save ();	
+		}
+		catch(Exception $e){
+			$result = '{"status":"error"';
+				$result .= ', "message": "' . str_replace("\"","||",$e->getMessage ()) . '"}';
+				echo $result;
+				exit;	
+		}
+		
 				
 
 			
@@ -107,7 +128,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			if ($check_grand_total < $amount):
 				$message = Mage::getStoreConfig('sales/minimum_order/error_message');
 				if(!$message) $message = 'Minimum Order Limit is '.$amount;
-			    	echo json_encode(array('status'=>'error','message'=> $message));
+			    	echo json_encode(array('status'=>'error','message'=> $this->__($message)));
 				exit;
 			endif;
 		
@@ -130,18 +151,19 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				$cart->removeItem ( $id )->save ();
 				echo json_encode(array("status"=>"success"));
 			} catch ( Mage_Core_Exception $e ) {
-				echo json_encode ( array ("status" =>"error","message"=>$e->getMessage ()));
+				echo json_encode ( array ("status" =>"error","message"=> $this->__($e->getMessage ())));
 				
 			} catch ( Exception $e ) {
-				echo json_encode ( array ("status" =>"error","message"=>$e->getMessage ()));
+				echo json_encode ( array ("status" =>"error","message"=>$this->__($e->getMessage ())));
 				
 			}
 		else:
-			echo json_encode(array ("status" =>"error","message"=>"Param cart_item_id is empty."));
+			echo json_encode(array ("status" =>"error","message"=>$this->__("Param cart_item_id is empty.")));
 			exit;
 		endif;
-
 	}
+
+	
 	public function clearcartAction()
 	{
 
@@ -153,7 +175,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 			
 			$result = '{"result":"success"';
-			$result .= ', "message": "' . 'cart is empty!' . '"}';
+			$result .= ', "message": "' .$this->__( 'cart is empty!' ). '"}';
 			echo $result;	
 			
 		 
@@ -173,8 +195,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				) );
 				$params ['qty'] = $filter->filter ( $params ['qty'] );
 			} else if ($product_id == '') {
-				$session->addError ( "Product Not Added
-					The SKU you entered ($sku) was not found." );
+				$session->addError ($this->__("Product Not Added
+					The SKU you entered %s was not found." ,$sku));
 			}
 			$request = Mage::app ()->getRequest ();
 			$product = Mage::getModel ( 'catalog/product' )->load ( $product_id );
@@ -212,11 +234,11 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				$cart->addProduct ( $product, $params );
 			endif;
 
-
-			$session->setLastAddedProductId ( $product->getId () );
-			$session->setCartWasUpdated ( true );
-			$cart->save ();
-
+			
+				$session->setLastAddedProductId ( $product->getId () );
+				$session->setCartWasUpdated ( true );
+				$cart->save ();
+			
 
 			$cart = Mage::getSingleton ( 'checkout/cart' );
 			$quote = $cart->getQuote ();
@@ -234,9 +256,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			$result .= ', "items_qty": "' . $items_qty . '"';
 			$result .= ', "cart_item_id": "' . $cartItemArr . '"}';
 			echo $result;
+
 		} catch ( Exception $e ) {
-
-
 			$result = '{"result":"error"';
 			$result .= ', "message": "' . str_replace("\"","||",$e->getMessage ()) . '"}';
 			echo $result;	
@@ -266,8 +287,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				) );
 				$params ['qty'] = $filter->filter ( $params ['qty'] );
 			} else if ($product_id == '') {
-				$session->addError ( "Product Not Added
-					The SKU you entered ($sku) was not found." );
+				$session->addError ($this->__( "Product Not Added
+					The SKU you entered %s was not found.", $sku ));
 			}
 			$request = Mage::app ()->getRequest ();
 			$product = Mage::getModel ( 'catalog/product' )->load ( $product_id );
@@ -292,10 +313,10 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				$cart->removeItem ( $id )->save ();
 				echo json_encode(array('cart_info'=>$this->_getCartInformation(),'total'=>$this->_getCartTotal ()));
 			} catch ( Mage_Core_Exception $e ) {
-				echo json_encode ( $e->getMessage () );
+				echo json_encode ( $this->__($e->getMessage () ));
 				
 			} catch ( Exception $e ) {
-				echo json_encode ( $e->getMessage () );
+				echo json_encode ( $this->__($e->getMessage () ));
 				
 			}
 		} else {
@@ -324,8 +345,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				} else {
 					echo json_encode ( array (
 							'status' => 'error',
-							'message' => 'a wrong cart_item_id was given.' 
-					) );
+							'message' => $this->__('a wrong cart_item_id was given.')
+					));
 					return false;
 				}
 				$oldQty = $item->getQty ();
@@ -344,10 +365,10 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		} catch ( Mage_Core_Exception $e ) { // rollback $quote->collectTotals()->save();
 			$item && $item->setData ( 'qty', $oldQty );
 			$cart->getQuote ()->setTotalsCollectedFlag ( false ); // reflash price
-			echo json_encode (array('status'=>'error','message'=> $e->getMessage ()) );
+			echo json_encode (array('status'=>'error','message'=> $this->__($e->getMessage ()) ));
 			exit;
 		} catch ( Exception $e ) {
-			echo json_encode (array('status'=>'error','message'=> $e->getMessage ()) );
+			echo json_encode (array('status'=>'error','message'=> $this->__( $e->getMessage ()) ));
 			exit;
 		}
 		echo json_encode(array('cart_info'=>$this->_getCartInformation(),'total'=>$this->_getCartTotal ()));
@@ -373,8 +394,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			  {
 					  echo json_encode ( array (
 							'status' => 'error',
-							'message' => "Coupan Is not Valid" 
-					) );
+							'message' => $this->__("Coupan Is not Valid" ) 
+					  ));
 					return false;
 			  }
 		
@@ -384,8 +405,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		if (! $cart->getItemsCount ()) {
 			echo json_encode ( array (
 					'code' => '0X0001',
-					'message' => "You can't use coupon code with an empty shopping cart" 
-			) );
+					'message' => $this->__("You can't use coupon code with an empty shopping cart" 
+			) ));
 			return false;
 		}
 		if (Mage::app ()->getRequest ()->getParam ( 'remove' ) == 1) {
@@ -453,8 +474,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		$cartInfo ['cart_items'] = $this->_getCartItems ();
 		$cartInfo ['messages'] = sizeof ( $this->errors ) ? $this->errors : $this->_getMessage ();
 		$cartInfo ['cart_items_count'] = Mage::helper ( 'checkout/cart' )->getSummaryCount ();
-		$cartInfo ['grand_total'] = $cart->getQuote()->getGrandTotal();
-		$cartInfo ['sub_total'] = $cart->getQuote()->getSubtotal();
+		$cartInfo ['grand_total'] = number_format ( $cart->getQuote()->getGrandTotal(), 2, '.', '' );
+		$cartInfo ['sub_total'] = number_format ( $cart->getQuote()->getSubtotal(), 2, '.', '' );
 		$cartInfo ['allow_guest_checkout'] = Mage::helper ( 'checkout' )->isAllowedGuestCheckout ( $cart->getQuote () );
 		
 		return $cartInfo;
@@ -495,7 +516,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	protected function _getMessage() {
 		$cart = Mage::getSingleton ( 'checkout/cart' );
 		if (! Mage::getSingleton ( 'checkout/type_onepage' )->getQuote ()->hasItems ()) {
-			$this->errors [] = 'Cart is empty!';
+			$this->errors [] = $this->__('Cart is empty!');
 			return $this->errors;
 		}
 		if (! $cart->getQuote ()->validateMinimumAmount ()) {
@@ -507,7 +528,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			foreach ( $messages as $message ) {
 				if ($message) {
 					$message = str_replace("\"","||",$message);
-					$this->errors [] = $message->getText ();
+					$this->errors [] = $this->__($message->getText ());
 				}
 			}
 		}
@@ -538,49 +559,36 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		$cartItemsArr = array ();
 		$cart = Mage::getSingleton ( 'checkout/cart' );
 		$quote = $cart->getQuote ();
-		$currency = $quote->getquote_currency_code ();
+		/*$currency = $this->currency;*/
 		$displayCartPriceInclTax = Mage::helper ( 'tax' )->displayCartPriceInclTax ();
 		$displayCartPriceExclTax = Mage::helper ( 'tax' )->displayCartPriceExclTax ();
 		$displayCartBothPrices = Mage::helper ( 'tax' )->displayCartBothPrices ();
+
 		$items = $quote->getAllVisibleItems ();
+		$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
+		$currentCurrency = $this->currency;
+
+		$product_model = Mage::getModel ( 'catalog/product' );
+
 		foreach ( $items as $item ) {
 			$cartItemArr = array ();
 			$cartItemArr ['cart_item_id'] = $item->getId ();
-			$cartItemArr ['currency'] = $currency;
+			$cartItemArr ['currency'] = Mage::helper('connector')->getCurrencysymbolByCode($this->currency);
 			$cartItemArr ['entity_type'] = $item->getProductType ();
 			$cartItemArr ['item_id'] = $item->getProduct ()->getId ();
 			$cartItemArr ['item_title'] = strip_tags ( $item->getProduct ()->getName () );
 			$cartItemArr ['qty'] = $item->getQty ();
-			$cartItemArr ['thumbnail_pic_url'] = ( string ) Mage::getModel('catalog/product_media_config')
-        ->getMediaUrl( $item->getImage() );
+			$cartItemArr ['thumbnail_pic_url'] = Mage::helper('connector')-> Imageresize($product_model->load($item->getProduct ()->getId ())->getImage()
+                    ,'thumbnail','100','100');
 			$cartItemArr ['custom_option'] = $this->_getCustomOptions ( $item );
-			if ($displayCartPriceExclTax || $displayCartBothPrices) {
-				if (Mage::helper ( 'weee' )->typeOfDisplay ( $item, array (
-						0,
-						1,
-						4 
-				), 'sales' ) && $item->getWeeeTaxAppliedAmount ()) {
-					$exclPrice = $item->getCalculationPrice () + $item->getWeeeTaxAppliedAmount () + $item->getWeeeTaxDisposition ();
-				} else {
-					$exclPrice = $item->getCalculationPrice ();
-				}
-			}
-			$inclPrice = Mage::helper ( 'checkout' )->getPriceInclTax ( $item );
-			if ($displayCartPriceInclTax || $displayCartBothPrices) {
-				$_incl = Mage::helper ( 'checkout' )->getPriceInclTax ( $item );
-				if (Mage::helper ( 'weee' )->typeOfDisplay ( $item, array (
-						0,
-						1,
-						4 
-				), 'sales' ) && $item->getWeeeTaxAppliedAmount ()) {
-					$inclPrice = $_incl + $item->getWeeeTaxAppliedAmount ();
-				} else {
-					$inclPrice = $_incl - $item->getWeeeTaxDisposition ();
-				}
-			}
-			
-			//$cartItemArr ['item_price'] = max ( $exclPrice, $inclPrice );
-			$cartItemArr ['item_price'] = $exclPrice;
+					
+			$cartItemArr ['item_price'] = number_format ( Mage::helper ( 'directory' )
+								->currencyConvert ( 
+									Mage::helper('connector')
+									->getFinalPriceByProductId(
+										$item->getProduct()->getId())?:$item->getProduct()->getPrice(), 
+									$baseCurrency, 
+									$currentCurrency ), 2, '.', '' );
 			
 			array_push ( $cartItemsArr, $cartItemArr );
 		}
@@ -704,7 +712,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				if ($session->getUseNotice ( true )) {
 					$msg = $e->getMessage ();
 				} else {
-					$messages = array_unique ( explode ( "\n", $e->getMessage () ) );
+					$messages = array_unique ( explode ( "\n",$this->__( $e->getMessage () ) ));
 					foreach ( $messages as $message ) {
 						$msg .= $message . '<br>';
 					}
@@ -729,28 +737,37 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 		$methods = Mage::getSingleton('shipping/config')->getActiveCarriers();
 		$shipMethods = array();
+		$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
+		$currentCurrency = $this->currency;
+
 		foreach ($methods as $shippigCode=>$shippingModel) 
 		{
 
 			if($shippigCode == 'freeshipping'):
 				if(Mage::getStoreConfig('carriers/'.$shippigCode.'/free_shipping_subtotal') < Mage::helper('checkout/cart')->getQuote()->getBaseSubtotalWithDiscount()):
 					$shippingTitle = Mage::getStoreConfig('carriers/'.$shippigCode.'/title');
-			    	$shippingPrice = Mage::getStoreConfig('carriers/'.$shippigCode.'/price');
-			    	$shipMethods[]=array(
-			    				'code'=>$shippigCode,
-			    				'value'=>$shippingTitle,
-			    				'price'=>(int)$shippingPrice
-			    		);
+				    	$shippingPrice = Mage::getStoreConfig('carriers/'.$shippigCode.'/price');
+				    	$shipMethods[]=array(
+				    				'code'=>$shippigCode,
+				    				'value'=>$shippingTitle,
+				    				'price'=>number_format ( Mage::helper ( 'directory' )
+											->currencyConvert ( $shippingPrice, 
+											$baseCurrency, 
+											$currentCurrency ), 2, '.', '' )
+				    		);
 				endif;
 
 			else:
 				$shippingTitle = Mage::getStoreConfig('carriers/'.$shippigCode.'/title');
-		    	$shippingPrice = Mage::getStoreConfig('carriers/'.$shippigCode.'/price');
-		    	$shipMethods[]=array(
-		    				'code'=>$shippigCode,
-		    				'value'=>$shippingTitle,
-		    				'price'=>(int)$shippingPrice
-		    		);
+			    	$shippingPrice = Mage::getStoreConfig('carriers/'.$shippigCode.'/price');
+			    	$shipMethods[]=array(
+			    				'code'=>$shippigCode,
+			    				'value'=>$shippingTitle,
+			    				'price'=>number_format ( Mage::helper ( 'directory' )
+											->currencyConvert ( $shippingPrice, 
+											$baseCurrency, 
+											$currentCurrency ), 2, '.', '' )
+			    		);
 			endif;
 		    
 		    		
@@ -798,7 +815,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		if ($price < $amount):
 			$message = Mage::getStoreConfig('sales/minimum_order/error_message');
 			if(!$message) $message = 'Minimum Order Limit is '.$amount;
-		    	echo json_encode(array('status'=>'error','message'=> $message));
+		    	echo json_encode(array('status'=>'error','message'=> $this->__( $message)));
 			exit;
 		endif;
 
@@ -840,20 +857,20 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 								$this->validateCarddtails(json_decode($card_details,1));
 
 							if (!Zend_Validate::is($addressId, 'NotEmpty')):
-								echo json_encode(array('Status'=>'error','message'=>'AddressId should not be empty'));
+								echo json_encode(array('Status'=>'error','message'=> $this->__('AddressId should not be empty')));
 					    			exit;
 							endif;
 							if (!Zend_Validate::is($shipping_method, 'NotEmpty')):
-								echo json_encode(array('Status'=>'error','message'=>'Shippingmethod should not be empty'));
+								echo json_encode(array('Status'=>'error','message'=>$this->__('Shippingmethod should not be empty')));
 					    			exit;
 							endif;
 							if (!Zend_Validate::is($paymentmethod, 'NotEmpty')):
-								echo json_encode(array('Status'=>'error','message'=>'paymentmethod should not be empty'));
+								echo json_encode(array('Status'=>'error','message'=>$this->__('paymentmethod should not be empty')));
 					    			exit;
 							endif;
 							if($addressId==''){
 										$result=array(
-										'message'=>'address is missing!!!!',
+										'message'=>$this->__('address is missing!!!!'),
 										'status'=>'success'
 
 								);
@@ -914,7 +931,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 								}
 								Mage::getSingleton('checkout/session')->clear();
 
-								 $result=array(	'message'=>'Order placed successfully.',
+								 $result=array(	'message'=>$this->__('Order placed successfully.'),
 								 				'orderid'=>$order->getIncrementId(),
 															'result'=>'success'
 
@@ -926,13 +943,13 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 							
 							} catch (Exception $e) {
 
-								echo json_encode(array('status'=>'error','message'=>$e->getMessage()));
+								echo json_encode(array('status'=>'error','message'=> $this->__($e->getMessage())));
 								exit;
 								
 							}
 					else:
 							$result=array(
-										'message'=>'cart is empty',
+										'message'=> $this->__('cart is empty'),
 										'result'=>'success'
 
 								);
@@ -940,6 +957,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 					endif;
 
 			}else{
+
+					
 					ini_set('memory_limit', '128M');
 
 					$getParams = $this->getRequest()->getParams();
@@ -1045,7 +1064,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				}
 				catch (Exception $e) 
 				{
-							echo json_encode(array('status' =>'error','message' => $e->getMessage()));
+							echo json_encode(array('status' =>'error','message' => $this->__($e->getMessage())));
 							exit;
 							
 				}
@@ -1155,7 +1174,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		
 				
 
-		 $result=array(	'message'=>'Order placed successfully.',
+		 $result=array(	'message'=>$this->__('Order placed successfully.'),
 		 				'orderid'=>$orderId,
 									'result'=>'success'
 
@@ -1171,13 +1190,13 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	public function validateCarddtails($card_details){
 		
 		if(!sizeof($card_details)):
-			echo json_encode(array('status' =>'error','message' => 'Card Information is required in case of authorize.net payment method.'));
+			echo json_encode(array('status' =>'error','message' => $this->__('Card Information is required in case of authorize.net payment method.')));
 			exit;
 		endif;
 
 		if(!$card_details['cc_type'] || !$card_details['cc_number'] || 
 			!$card_details['cc_month'] || !$card_details['cc_year'] || !$card_details['cc_cid']):
-			echo json_encode(array('status' =>'error','message' => 'Some Required card information is missing.'));
+			echo json_encode(array('status' =>'error','message' => $this->__('Some Required card information is missing.')));
 			exit;
 		endif;
 		$this->cc_type = $card_details['cc_type'];
@@ -1212,11 +1231,15 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
           $cart = Mage::getModel('sales/quote') ->loadByCustomer($customer);
               
               if(!count($cart->getAllItems())):
-                echo json_encode(array('status'=>'success','message'=>$product));
+                echo json_encode(array('status'=>'success','message'=> $this->__($product)));
                 exit;
               endif;
               $product_model = Mage::getModel ( 'catalog/product' );
-              foreach ($cart->getAllVisibleItems() as $item) {
+
+            $baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
+			$currentCurrency = $this->currency;
+
+                foreach ($cart->getAllVisibleItems() as $item) {
 
                   $productName= array();
                   $productName['cart_item_id'] = $item->getId();
@@ -1225,9 +1248,10 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
                   $productName['qty'] = $item->getQty();              
                   $productName['Name'] = $item->getProduct()->getName();
                   /*$productName['Price'] = $item->getPrice()* $item->getQty();*/
-                  $productName['Price'] = $item->getPrice();
+                  $productName['Price'] = number_format ( Mage::helper ( 'directory' )->currencyConvert ( $item->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' );
                   $productName['image'] =Mage::helper('connector')-> Imageresize($product_model->load($item->getProductId())->getImage()
-                    ,'product','100','100');  
+                    ,'thumbnail','100','100');
+			$productName['wishlist'] =  Mage::helper('connector')->check_wishlist($item->getProductId());    
                           
                   if($product_model->load($item->getProductId())->isConfigurable())
                   	$productName['configurable'] = $this->_getConfigurableOptions( $item );
@@ -1238,28 +1262,70 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
                   $product['product'][] = $productName;
                   
-              }         
+              }        
               $product['subtotal'] = $cart->getSubtotal();
               $product['grandtotal'] = $cart->getGrandTotal();
               $product['totalitems'] = $cart->getItemsCount();
-            $product['symbol'] = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
+            $product['symbol'] = Mage::helper('connector')->getCurrencysymbolByCode($this->currency);
               
-              echo json_encode(array('status'=>'success','message'=>$product));
+              echo json_encode(array('status'=>'success','message'=> $this->__($product)));
 
               }
             catch(exception $e)
             {
-              echo json_encode(array('status'=>'error','message'=>$e->getMessage()));
+              echo json_encode(array('status'=>'error','message'=> $this->__($e->getMessage())));
             } 
           }
-          else{
+          else {
+          		try{
+		          	$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
+					$currentCurrency = $this->currency;
+					$product_model = Mage::getModel ( 'catalog/product' );
+					
+		          	$cart = Mage::getSingleton ( 'checkout/cart' );
+					$quote = $cart->getQuote ();
 
-            echo json_encode(array('status'=>'error','message'=>'Please Login.'));
-          }
-      
-		
-	}
+					/*get last inserted cart ID*/
+					$items = $quote->getAllVisibleItems ();
+					$cartItemArr='';
+					foreach ( $items as $item ){
+					  $productName= array();
+	                  $productName['cart_item_id'] = $item->getId();
+	                  $productName['id'] = $item->getProductId();
+	                  $productName['sku'] = $item->getSku();
+	                  $productName['qty'] = $item->getQty();              
+	                  $productName['Name'] = $item->getProduct()->getName();
+	                  /*$productName['Price'] = $item->getPrice()* $item->getQty();*/
+	                  $productName['Price'] = number_format ( Mage::helper ( 'directory' )->currencyConvert ( $item->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' );
+	                  $productName['image'] =Mage::helper('connector')-> Imageresize($product_model->load($item->getProductId())->getImage()
+	                    ,'product','100','100');  
+	                          
+	                  if($product_model->load($item->getProductId())->isConfigurable())
+	                  	$productName['configurable'] = $this->_getConfigurableOptions( $item );
 
+	                  if($product_model->load($item->getProductId())->getData('has_options'))
+	                  	($this->_getCustomOption( $item ))?$productName['custom_option'] = $this->_getCustomOption( $item ):'';
+	                  		
+
+	                  $product['product'][] = $productName;
+
+					}
+					$product['subtotal'] = $cart->getSubtotal();
+	              	$product['grandtotal'] = $cart->getGrandTotal();
+	              	$product['totalitems'] = $cart->getItemsCount();
+	            	$product['symbol'] = Mage::helper('connector')->getCurrencysymbolByCode($this->currency);
+	              
+	              echo json_encode(array('status'=>'success','message'=>$product));
+	            }
+				catch(exception $e)
+	            {
+	              echo json_encode(array('status'=>'error','message'=>$e->getMessage()));
+	            } 	
+			}
+
+
+            //echo json_encode(array('status'=>'error','message'=>'Please Login.'));
+    }
 	 /*	Cancel Order API :
 
 		URL : /restapi/cart/cancelOrder/	
@@ -1273,14 +1339,14 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	*/   
 
 	public function cancelOrderAction(){
-		$orderId =(int)$this->getRequest()->getParam('orderid');
+		$orderId =(int)$this->getRequest()->getParam('orderId');
 	
 		if($orderId):
 			if(Mage::getSingleton ( 'customer/session' )->isLoggedIn()):
 				try{
 					$order = Mage::getModel('sales/order')->loadByIncrementId($orderId);
 					if(!$order->getId()):
-						echo json_encode(array('status'=>'error','message'=>'Invalid Order Id.'));
+						echo json_encode(array('status'=>'error','message'=>$this->__('Invalid Order Id.')));
 			    		exit;
 					endif;
 
@@ -1294,19 +1360,19 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				}
 				catch(Exceptio $e)
 				{
-					echo json_encode(array('status'=>'error','message'=>$e->getMessage()));
+					echo json_encode(array('status'=>'error','message'=> $this->__($e->getMessage())));
 			    	exit;
 				}
 				
-				echo json_encode(array('status'=>'success','message'=>'Order marked as cancelled by User.'));
+				echo json_encode(array('status'=>'success','message'=> $this->__('Order marked as cancelled by User.')));
 			    exit;
 			else:
-				echo json_encode(array('status'=>'error','message'=>'Login first tio cancel Order.'));
+				echo json_encode(array('status'=>'error','message'=> $this->__('Login first tio cancel Order.')));
 			    exit;
 			endif;		
 
 		else:
-			  echo json_encode(array('status'=>'error','message'=>'Please send Order Id to cancel.'));
+			  echo json_encode(array('status'=>'error','message'=> $this->__('Please send Order Id to cancel.')));
 			  exit;
 		endif;
 
@@ -1373,15 +1439,15 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
            		foreach ($collection as $cc_card):
            			try{$cc_card->delete();}
            			catch(expection $e){
-           					echo json_encode( array('status' => 'error' , 'massage'=>$e->getMessage() ));
+           					echo json_encode( array('status' => 'error' , 'massage'=> $this->__($e->getMessage() )));
 		  				    exit;
            			}			
 				endforeach;
 			endif;				
-		    echo json_encode( array('status' => 'success' , 'massage'=>'Card remove successfully' ));
+		    echo json_encode( array('status' => 'success' , 'massage'=> $this->__('Card remove successfully' )));
 		    exit;
 		else:
-			echo json_encode( array('status' => 'error' , 'massage'=>'error in removing card' ));
+			echo json_encode( array('status' => 'error' , 'massage'=>$this->__('error in removing card' )));
 		    exit;
 		endif;	
 	}

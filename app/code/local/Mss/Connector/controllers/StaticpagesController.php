@@ -59,13 +59,13 @@ class Mss_Connector_StaticpagesController extends Mage_Core_Controller_Front_Act
 				echo json_encode(array('status'=>'success','data'=>$data));
 				exit;
 			else:
-				echo json_encode(array('status'=>'error','message'=>'No page configured, please configure page first'));
+				echo json_encode(array('status'=>'error','message'=> $this->__('No page configured, please configure page first')));
 				exit;
 			endif;
 		}
 		catch(exception $e){
 
-			echo json_encode(array('status'=>'error','message'=>'Problem in loading data.'));
+			echo json_encode(array('status'=>'error','message'=> $this->__('Problem in loading data.')));
 			exit;
 
 		}

@@ -53,7 +53,7 @@ class Mss_Bannerslider_BannerController extends Mage_Core_Controller_Front_Actio
 				echo json_encode(array('status'=>'success','data'=>$alldata));
 				exit;
 			else:
-				echo json_encode(array('status'=>'error','message'=>'No banner uploaded'));
+				echo json_encode(array('status'=>'error','message'=> $this->__('No banner uploaded')));
 			endif;
 	}
 }

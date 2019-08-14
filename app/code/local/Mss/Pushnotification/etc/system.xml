@@ -138,6 +138,14 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </googlekey> 
+                        <googlesenderid translate="label">
+                            <label>Google SenderID</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>3</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </googlesenderid> 
                         <notificationimage translate="label comment">
                             <label>Notification Icon : </label>
                             <comment>Allowed file types: .jpeg,.png,.gif.(only for android)</comment>
@@ -145,7 +153,7 @@
                             <backend_model>pushnotification/system_config_backend_image</backend_model>
                             <upload_dir config="system/filesystem/media" scope_info="1">notification</upload_dir>
                             <base_url type="media" scope_info="1">notification</base_url>
-                            <sort_order>3</sort_order>
+                            <sort_order>4</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>

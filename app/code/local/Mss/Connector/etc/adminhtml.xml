@@ -10,12 +10,16 @@
 									<children>
 										<mss translate="title" module="connector">
 											<title>Magentomobileshop Connector</title>
-											<sort_order>1000</sort_order>
+											<sort_order>1</sort_order>
 										</mss>
 										<magentomobileshop_payment translate="title" module="connector">
 											<title>Magentomobileshop Payment</title>
-											<sort_order>1001</sort_order>
+											<sort_order>2</sort_order>
 										</magentomobileshop_payment>
+										<mss_social translate="title" module="connector">
+											<title>Social Type</title>
+											<sort_order>3</sort_order>
+										</mss_social>
 									</children>
 								</config>
 							</children>

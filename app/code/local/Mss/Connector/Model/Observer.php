@@ -8,6 +8,12 @@ class Mss_Connector_Model_Observer
 	public function notificationMessage()
 	{
 	  $adminsession = Mage::getSingleton('admin/session', array('name'=>'adminhtml'));
+	 
+	  	if(!Mage::getStoreConfig('web/url/use_store')):
+	  		$mssSwitch = new Mage_Core_Model_Config();
+	  		$mssSwitch->saveConfig('web/url/use_store', 1);
+	  	endif;
+	 
 
 		if(!Mage::getStoreConfig(self::XML_SECURE_KEY) AND $adminsession->isLoggedIn()):
 
@@ -19,8 +25,8 @@ class Mss_Connector_Model_Observer
 
         $configValue = Mage::getStoreConfig('mss/connector/email');
         
-		//if($configValue =='' AND $adminsession->isLoggedIn())
-			//$this->sendemail();
+		/*if($configValue =='' AND $adminsession->isLoggedIn())
+			$this->sendemail();*/
 
 
      	
@@ -57,8 +63,9 @@ MESSAGE;
 		  
 			if($email):
 				$mssSwitch = new Mage_Core_Model_Config();
-				$mssSwitch ->saveConfig('mss/connector/email', 1);										    
+				$mssSwitch->saveConfig('mss/connector/email', 1);										    
 			endif;
+			
 
 			return true;
 		

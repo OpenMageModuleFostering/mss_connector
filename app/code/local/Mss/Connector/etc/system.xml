@@ -423,5 +423,106 @@
             </groups>
         </magentomobileshop_payment>
     </sections>
+    <!-- Store configuration for store locator added -->
+    <sections>
+        <general>
+            <groups>
+                <store_information>
+                   <fields>
+                        <longitude translate="label">
+                            <label>Longitude</label>
+                            <sort_order>30</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </longitude>
+                        <latitude translate="label">
+                            <label>Latitude</label>
+                            <sort_order>31</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </latitude>
+                    </fields>
+                </store_information>
+            </groups>
+        </general>
+    </sections>
+<!-- Social login configuration -->
+    <sections>
+		<mss_social translate="label" module="connector">
+		            <label>Social Loging Configuration</label>
+		            <tab>connector</tab>
+		            <sort_order>15</sort_order>
+		            <show_in_default>1</show_in_default>
+		            <show_in_website>1</show_in_website>
+		            <show_in_store>1</show_in_store>
+		            <groups>
+		                    <my_aboutus translate="label" module="connector">
+		                        <label>About Magento Mobile</label>
+		                        <frontend_type>text</frontend_type>
+		                        <sort_order>0</sort_order>
+		                        <show_in_default>1</show_in_default>
+		                        <show_in_website>1</show_in_website>
+		                        <show_in_store>1</show_in_store>
+		                        <fields>
+		                            <about>
+		                                <frontend_model>connector/system_config_about</frontend_model>
+		                                <sort_order>0</sort_order>
+		                                <show_in_default>1</show_in_default>
+		                                <show_in_website>1</show_in_website>
+		                                <show_in_store>1</show_in_store>
+		                            </about> 
+		                        </fields>                        
+		                    </my_aboutus>
+		                    <mss_google_key translate="label" module="connector">
+		                        <label>Google Key</label>
+		                        <frontend_type>text</frontend_type>
+		                        <sort_order>0</sort_order>
+		                        <show_in_default>1</show_in_default>
+		                        <show_in_website>1</show_in_website>
+		                        <show_in_store>1</show_in_store>
+		                        <fields>
+		                            <client_secret translate="label">
+		                                <label>Client Secret</label>
+		                                <frontend_type>text</frontend_type>
+		                                <sort_order>2</sort_order>
+		                                <show_in_default>1</show_in_default>
+		                                <show_in_website>1</show_in_website>
+		                                <show_in_store>1</show_in_store>
+		                            </client_secret>
+		                            <client_id translate="label">
+		                                <label>Client Id</label>
+		                                <frontend_type>text</frontend_type>
+		                                <sort_order>2</sort_order>
+		                                <show_in_default>1</show_in_default>
+		                                <show_in_website>1</show_in_website>
+		                                <show_in_store>1</show_in_store>
+		                            </client_id>
+		                        </fields>                        
+		                    </mss_google_key>
+		                    <mss_facebook_key translate="label" module="connector">
+		                        <label>Facebook Key</label>
+		                        <frontend_type>text</frontend_type>
+		                        <sort_order>3</sort_order>
+		                        <show_in_default>1</show_in_default>
+		                        <show_in_website>1</show_in_website>
+		                        <show_in_store>1</show_in_store>
+		                        <fields>
+		                            <facebook_id translate="label">
+		                                <label>Facebook Key</label>
+		                                <frontend_type>text</frontend_type>
+		                                <sort_order>2</sort_order>
+		                                <show_in_default>1</show_in_default>
+		                                <show_in_website>1</show_in_website>
+		                                <show_in_store>1</show_in_store>
+		                               
+		                            </facebook_id>
+		                        </fields>
+		                </mss_facebook_key>
+		            </groups>
+		            
+		    </mss_social>
+    </sections>
     
 </config>

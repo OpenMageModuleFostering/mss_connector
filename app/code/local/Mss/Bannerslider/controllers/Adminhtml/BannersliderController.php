@@ -50,7 +50,7 @@ class Mss_Bannerslider_Adminhtml_BannersliderController extends Mage_Adminhtml_C
 
             $this->renderLayout();
         } else {
-            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('bannerslider')->__('Item does not exist'));
+            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('bannerslider')->__($this->__('Item does not exist')));
             $this->_redirect('*/*/');
         }
     }
@@ -118,13 +118,13 @@ class Mss_Bannerslider_Adminhtml_BannersliderController extends Mage_Adminhtml_C
                 $this->_redirect('*/*/');
                 return;
             } catch (Exception $e) {
-                Mage::getSingleton('adminhtml/session')->addError($e->getMessage());
+                Mage::getSingleton('adminhtml/session')->addError($this->__($e->getMessage()));
                 Mage::getSingleton('adminhtml/session')->setFormData($data);
                 $this->_redirect('*/*/edit', array('id' => $this->getRequest()->getParam('id')));
                 return;
             }
         }
-        Mage::getSingleton('adminhtml/session')->addError(Mage::helper('bannerslider')->__('Unable to find banner to save'));
+        Mage::getSingleton('adminhtml/session')->addError(Mage::helper('bannerslider')->__( $this->__('Unable to find banner to save')));
         $this->_redirect('*/*/');
     }
 
@@ -140,7 +140,7 @@ class Mss_Bannerslider_Adminhtml_BannersliderController extends Mage_Adminhtml_C
                 Mage::getSingleton('adminhtml/session')->addSuccess(Mage::helper('adminhtml')->__('Banner was successfully deleted'));
                 $this->_redirect('*/*/');
             } catch (Exception $e) {
-                Mage::getSingleton('adminhtml/session')->addError($e->getMessage());
+                Mage::getSingleton('adminhtml/session')->addError( $this->__($e->getMessage()));
                 $this->_redirect('*/*/edit', array('id' => $this->getRequest()->getParam('id'), 'store' => $this->getRequest()->getParam("store")));
             }
         }
@@ -153,7 +153,7 @@ class Mss_Bannerslider_Adminhtml_BannersliderController extends Mage_Adminhtml_C
     public function massDeleteAction() {
         $bannersliderIds = $this->getRequest()->getParam('banner');
         if (!is_array($bannersliderIds)) {
-            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('adminhtml')->__('Please select item(s)'));
+            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('adminhtml')->__( $this->__('Please select item(s)')));
         } else {
             try {
                 foreach ($bannersliderIds as $bannersliderId) {
@@ -162,7 +162,7 @@ class Mss_Bannerslider_Adminhtml_BannersliderController extends Mage_Adminhtml_C
                 }
                 Mage::getSingleton('adminhtml/session')->addSuccess(Mage::helper('adminhtml')->__('Total of %d record(s) were successfully deleted', count($bannersliderIds)));
             } catch (Exception $e) {
-                Mage::getSingleton('adminhtml/session')->addError($e->getMessage());
+                Mage::getSingleton('adminhtml/session')->addError( $this->__($e->getMessage()));
             }
         }
         $this->_redirect('*/*/index', array('store' => $this->getRequest()->getParam("store")));
@@ -188,7 +188,7 @@ class Mss_Bannerslider_Adminhtml_BannersliderController extends Mage_Adminhtml_C
                         $this->__('Total of %d record(s) were successfully updated', count($bannerIds))
                 );
             } catch (Exception $e) {
-                $this->_getSession()->addError($e->getMessage());
+                $this->_getSession()->addError( $this->__($e->getMessage()));
             }
         }
         $this->_redirect('*/*/index', array('store' => $this->getRequest()->getParam("store")));

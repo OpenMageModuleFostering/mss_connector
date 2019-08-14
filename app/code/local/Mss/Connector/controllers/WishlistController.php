@@ -1,12 +1,22 @@
 <?php
 class Mss_Connector_WishlistController extends Mage_Core_Controller_Front_Action {
 
+	public $storeId = "1";
+	public $viewId = "";
+	public $currency = "";
 	
 	public function _construct(){
 
 		header('content-type: application/json; charset=utf-8');
 		header("access-control-allow-origin: *");
 		Mage::helper('connector')->loadParent(Mage::app()->getFrontController()->getRequest()->getHeader('token'));
+
+		$this->storeId = Mage::app()->getFrontController()->getRequest()->getHeader('storeId');
+		$this->viewId = Mage::app()->getFrontController()->getRequest()->getHeader('viewId');
+		$this->currency = Mage::app()->getFrontController()->getRequest()->getHeader('currency');
+		Mage::app()->setCurrentStore($this->storeId);
+		/*Mage::app()->getStore($this->storeId)->setCurrentCurrency($this->currency);*/
+
 		parent::_construct();
 		
 	}
@@ -95,7 +105,7 @@ class Mss_Connector_WishlistController extends Mage_Core_Controller_Front_Action
 	protected function _getWishlist() {
 		$wishlist = Mage::registry ( 'wishlist' );
 		$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
-		$currentCurrency = Mage::app ()->getStore ()->getCurrentCurrencyCode ();
+		$currentCurrency = $this->currency;
 		if ($wishlist) {
 			return $wishlist;
 		}
@@ -104,10 +114,10 @@ class Mss_Connector_WishlistController extends Mage_Core_Controller_Front_Action
 			$wishlist = Mage::getModel ( 'wishlist/wishlist' )->loadByCustomer ( Mage::getSingleton ( 'customer/session' )->getCustomer (), true );
 			Mage::register ( 'wishlist', $wishlist );
 		} catch ( Mage_Core_Exception $e ) {
-			Mage::getSingleton ( 'wishlist/session' )->addError ( $e->getMessage () );
+			Mage::getSingleton ( 'wishlist/session' )->addError ( $this->__($e->getMessage () ));
 		} catch ( Exception $e ) {
 			Mage::getSingleton ( 'wishlist/session' )->addException ( $e, Mage::helper ( 'wishlist' )->__ ( 'Cannot create wishlist.' ) );
-			return false;
+			return array();
 		}
 		$items = array ();
 		foreach ( $wishlist->getItemCollection () as $item ) {
@@ -119,8 +129,9 @@ class Mss_Connector_WishlistController extends Mage_Core_Controller_Front_Action
 						'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $item->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
 						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $item->getSpecialPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
 						'sku' => $item->getSku () ,
-						'symbol' => Mage::app ()->getLocale ()->currency ( Mage::app ()->getStore ()->getCurrentCurrencyCode () )->getSymbol (),
-						'image_url' => Mage::helper('connector')-> Imageresize($item->getImage(),'product','100','100')
+						'symbol' => Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
+						'image_url' => Mage::helper('connector')-> Imageresize($item->getImage(),'product','100','100'),
+						'wishlist' =>  Mage::helper('connector')->check_wishlist($item->getId ())
 
 				);
 			}
@@ -150,7 +161,7 @@ class Mss_Connector_WishlistController extends Mage_Core_Controller_Front_Action
 		$params = $this->getRequest()->getParam('product_id');
 
 		if(!$params){
-			echo json_encode(array('status'=>'error','message'=>'Product Id is missing.'));
+			echo json_encode(array('status'=>'error','message'=> $this->__('Product Id is missing.')));
 			exit;
 		}
 		$session = Mage::getSingleton ( 'customer/session' );
@@ -164,11 +175,11 @@ class Mss_Connector_WishlistController extends Mage_Core_Controller_Front_Action
 			    	try{
 			    		$item->delete();
 			    		$response['status'] = 'success';
-						$response['message'] = 'item removed from wishlist.';
+						$response['message'] = $this->__('item removed from wishlist.');
 			    	}
 			    	catch(exception $e){
 			    		$response['status'] = 'error';
-						$response['message'] = $e->getMessage();
+						$response['message'] = $this->__($e->getMessage());
 			    	}
 			    endif;
 			endforeach;
@@ -179,4 +190,36 @@ class Mss_Connector_WishlistController extends Mage_Core_Controller_Front_Action
 
 		echo json_encode($response);
 	} 
+
+	/*Clear wishList API*/
+	/*
+	 URL : baseurl/restapi/wishlist/clearWishlist
+	 Name : clearWishlist
+	 Method : GET
+	 Response : JSON
+	*/
+
+	 public function clearWishlistAction()
+	 {
+
+	 	if (Mage::getSingleton ( 'customer/session' )->isLoggedIn()):
+	 		$customer = Mage::getSingleton ( 'customer/session' )->getCustomer();
+			$customerId = $customer->getId();
+
+			$wishlistItems = Mage::getModel('wishlist/item')->getCollection()
+			    				->addCustomerIdFilter($customerId);
+
+			foreach($wishlistItems as $item)
+				    $item->delete();
+				
+			echo  json_encode(array('status'=>'success','message'=>'All wishlist items removed.'));
+			exit;
+
+
+		else:
+			echo  json_encode(array('status'=>'error','message'=>'Kindly Signin first.'));
+			exit;
+		endif;
+
+	 }
 } 

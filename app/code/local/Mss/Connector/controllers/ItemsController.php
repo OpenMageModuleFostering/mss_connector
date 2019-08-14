@@ -233,7 +233,7 @@ class Mss_Connector_ItemsController extends Mage_Core_Controller_Front_Action {
 			return array (
 					false,
 					'0x0013',
-					$e->getMessage () 
+					$this->__($e->getMessage ()) 
 			);
 		}
 	}

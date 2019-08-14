@@ -6,6 +6,14 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 	const XML_SECURE_TOKEN = 'magentomobileshop/secure/token';
 	const XML_SECURE_TOKEN_EXP = 'secure/token/exp';
 
+	const XML_SETTING_ACTIVE = 'wishlist/general/active';
+	const XML_SETTING_GUEST_REVIEW = 'catalog/review/allow_guest';
+	const XML_SETTING_GUEST_CHECKOUT = 'checkout/options/guest_checkout';
+	const XML_SETTING_GOOGLE_CLIENT_ID = 'mss_social/mss_google_key/client_id';
+	const XML_SETTING_GOOGLE_SECRET_ID = 'mss_social/mss_google_key/client_secret';
+	const XML_SETTING_FACEBOOK_ID = 'mss_social/mss_facebook_key/facebook_id';
+	const XML_SETTING_GOOGLE_SENDER_ID = 'mss_pushnotification/setting_and/googlesenderid';
+
 
 	public function _construct(){
 
@@ -53,14 +61,14 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 				echo json_encode(array('status'=>'success','message'=>'Data updated.'));
 			else:
 
-				echo json_encode(array('status'=>'error','message'=>'Required parameters are missing.'));
+				echo json_encode(array('status'=>'error','message'=> $this->__('Required parameters are missing.')));
 
 			endif;
 
 		}
 		catch(exception $e){
 
-			echo json_encode(array('status'=>'error','message'=>$e->getMessage()));
+			echo json_encode(array('status'=>'error','message'=> $this->__($e->getMessage())));
 
 		}
 	}
@@ -82,6 +90,7 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 	public function getTokenAction(){
 
 		try{
+			
 			if(Mage::getStoreConfig(self::XML_SECURE_KEY_STATUS)):
 				
 				
@@ -125,22 +134,22 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 							exit;
 						endif;
 					else:
-						echo json_encode(array('status'=>'error','message'=> 'Invalid secure key.'));
+						echo json_encode(array('status'=>'error','message'=> $this->__('Invalid secure key.')));
 					endif;
 				else:
 
-					echo json_encode(array('status'=>'error','message'=>'Secure key is required.'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Secure key is required.')));
 
 				endif;
 
 			else:
-					echo json_encode(array('status'=>'error','message'=>'App is disabled by magentomobileshop admin.'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('App is disabled by magentomobileshop admin.')));
 			endif;
 
 		}
 		catch(exception $e){
 
-			echo json_encode(array('status'=>'error','message'=>$e->getMessage()));
+			echo json_encode(array('status'=>'error','message'=> $this->__($e->getMessage())));
 
 		}
 	}
@@ -184,6 +193,66 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 		{
 			return false;
 		}
+
+	}
+
+	/*
+		Working url : baseURL/restapi/storeinfo/getConfiguration/
+		URL : baseurl/restapi/storeinfo/getConfiguration/
+		Name : getConfiguration
+		Method : GET
+		Response : JSON
+		Return Response :
+		{
+			  "wishlist": "1",
+			  "review_allow_guest": "1",
+			  "guestcheckout": "1",
+			  "review": "0",
+			  "rating_type": [
+			    "Quality",
+			    "Value",
+			    "Price"
+			  ]
+			}
+	*/
+
+			
+	public function getConfigurationAction(){
+
+			$config_data = array();
+			$config_data['wishlist'] = Mage::getStoreConfig(self::XML_SETTING_ACTIVE);
+			$config_data['review_allow_guest'] = Mage::getStoreConfig(self::XML_SETTING_GUEST_REVIEW);
+			$config_data['guestcheckout'] = Mage::getStoreConfig(self::XML_SETTING_GUEST_CHECKOUT);
+
+			$config_data['google_clientid'] = Mage::getStoreConfig(self::XML_SETTING_GOOGLE_CLIENT_ID);
+			$config_data['google_secretid'] = Mage::getStoreConfig(self::XML_SETTING_GOOGLE_SECRET_ID);
+			$config_data['facebook_id'] = Mage::getStoreConfig(self::XML_SETTING_FACEBOOK_ID);
+			$config_data['google_senderid'] = Mage::getStoreConfig(self::XML_SETTING_GOOGLE_SENDER_ID);
+			$config_data['default_store_name'] = Mage::app()->getDefaultStoreView()->getCode();
+			$config_data['default_store_id'] = Mage::app()->getWebsite(true)->getDefaultGroup()
+							    ->getDefaultStoreId();
+			$config_data['default_view_id'] = Mage::app()->getDefaultStoreView()->getId();
+			$config_data['default_store_currency'] = Mage::app()->getStore()->getCurrentCurrencyCode();
+			
+			
+		    if(Mage::helper('core')->isModuleOutputEnabled('Mage_Review'))
+		        $config_data['review'] ='1';
+		    else
+		       $config_data['review'] ='0';
+		    
+		 ##Rating 
+		    $resource = Mage::getSingleton('core/resource');
+		    $readConnection = $resource->getConnection('core_read');		   
+		    $query = 'SELECT * FROM ' . $resource->getTableName('rating');
+		    $results = $readConnection->fetchAll($query);
+			
+				foreach($results as $rating)					
+					$ratingdata[] = $rating['rating_code'] ;
+			
+			   
+			$config_data['rating_type'] = $ratingdata;
+			echo json_encode($config_data);
+
 
 	}
 }

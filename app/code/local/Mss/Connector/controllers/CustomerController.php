@@ -13,11 +13,23 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 	const XML_PATH_CONFIRMED_EMAIL_TEMPLATE     = 'customer/create_account/email_confirmed_template';
 	const XML_PATH_GENERATE_HUMAN_FRIENDLY_ID   = 'customer/create_account/generate_human_friendly_id';
 
+	public $storeId = "1";
+	public $viewId = "";
+	public $currency = "";
+
+
 	public function _construct(){
 
 		header('content-type: application/json; charset=utf-8');
 		header("access-control-allow-origin: *");
 		Mage::helper('connector')->loadParent(Mage::app()->getFrontController()->getRequest()->getHeader('token'));
+
+		$this->storeId = Mage::app()->getFrontController()->getRequest()->getHeader('storeId');
+		$this->viewId = Mage::app()->getFrontController()->getRequest()->getHeader('viewId');
+		$this->currency = Mage::app()->getFrontController()->getRequest()->getHeader('currency');
+		Mage::app()->setCurrentStore($this->storeId);
+		
+
 		parent::_construct();
 		
 	}
@@ -48,14 +60,12 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			
 			$customerinfo = array (
 					'id'=>$customer->getId(),
-					'name' => $customer->getFirstname () .$customer->getLastname (),
+					'name' => $customer->getFirstname () .' '.$customer->getLastname (),
 					'email' => $customer->getEmail (),
 					);
 				
 			return $customerinfo;
-		} else
-			
-			return false;
+		} else	return false;
 	}
 
 
@@ -74,35 +84,35 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		 
 		try {
 			if (!$session->login ( $username, $password )) {
-				echo json_encode(array('status' => 'error','message'=>'wrong username or password.'));
+				echo json_encode(array('status' => 'error','message'=> $this->__('wrong username or password.')));
 				exit;
 			} else {
 
-				echo json_encode(array('status' => 'success','message'=>$this->statusAction ()));
+				echo json_encode(array('status' => 'success','message'=>$this->__($this->statusAction ())));
 				exit;
 			}
 		} catch ( Mage_Core_Exception $e ) {
 			switch ($e->getCode ()) {
 				case Mage_Customer_Model_Customer::EXCEPTION_EMAIL_NOT_CONFIRMED :
-					$value = Mage::helper ( 'customer' )->getEmailConfirmationUrl ( $uname );
+					$value = Mage::helper ( 'customer' )->getEmailConfirmationUrl ( $username );
 					$message = Mage::helper ( 'customer' )->__ ( 'This account is not confirmed. <a href="%s">Click here</a> to resend confirmation email.', $value );
 					echo json_encode ( array (
 							'status' => 'error',
-							'message' => $message 
+							'message' =>  $this->__($message )
 					) );
 					break;
 				case Mage_Customer_Model_Customer::EXCEPTION_INVALID_EMAIL_OR_PASSWORD :
 					$message = $e->getMessage ();
 					echo json_encode ( array (
 							'status' => 'error',
-							'message' => $message 
+							'message' => $this->__($message )
 					) );
 					break;
 				default :
 					$message = $e->getMessage ();
 					echo json_encode ( array (
 							'status' => 'error',
-							'message' => $message 
+							'message' => $this->__($message )
 					) );
 			}
 		}
@@ -129,7 +139,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			echo json_encode ( array (
 					false,
 					'0x1100',
-					'empty password or email.'
+					$this->__('empty password or email.')
 			) );
 			return ;
 		}
@@ -176,23 +186,23 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		} catch ( Mage_Core_Exception $e ) {
 			if ($e->getCode () === Mage_Customer_Model_Customer::EXCEPTION_EMAIL_EXISTS) {
 				$url = Mage::getUrl ( 'customer/account/forgotpassword' );
-				$message = $this->__ ( 'There is already an account with this email address. If you are sure that it is your email address, <a href="%s">click here</a> to get your password and access your account.', $url );
+				$message = $this->__( 'There is already an account with this email address. If you are sure that it is your email address, <a href="%s">click here</a> to get your password and access your account.', $url );
 				$session->setEscapeMessages ( false );
 			} else {
-				$message = $e->getMessage ();
+				$message = $this->__($e->getMessage ());
 			}
 			echo json_encode ( array (
 					false,
 					'0x1000',
 					array (
-							$message 
+							$this->__($message )
 					) 
 			) );
 		} catch ( Exception $e ) {
 			echo json_encode ( array (
 					false,
 					'0x1000',
-					$e->getMessage () 
+					$this->__($e->getMessage () )
 			) );
 		}
 	}
@@ -212,12 +222,12 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			), $storeId );
 			echo json_encode ( array (
 					'status' => 'error',
-					'message' => 'Request has sent to your Email.'
+					'message' => $this->__('Request has sent to your Email.')
 			) );
 		} else
 			echo json_encode ( array (
 					'status' => 'error',
-					'message' => 'No matched email data.' 
+					'message' => $this->__('No matched email data.' )
 			) );
 	}
 	public function logoutAction() {
@@ -227,7 +237,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			Mage::getSingleton ( 'customer/session' )->logout();
 			echo json_encode(array(true, '0x0000', null));
 		} catch (Exception $e) {
-			echo json_encode(array(false, '0x1000', $e->getMessage()));
+			echo json_encode(array(false, '0x1000', $this->__($e->getMessage())));
 		}
 	}
 	protected function _user_isexists($email) {
@@ -275,42 +285,44 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				
 				
 				if (!Zend_Validate::is($data['firstname'], 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Firstname should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Firstname should not be empty')));
 		    			exit;
 				endif;
 				if (!Zend_Validate::is($data['lastname'], 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Lastname should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Lastname should not be empty')));
 		    			exit;
 				endif;
 				if (!Zend_Validate::is($data['street'], 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Street should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Street should not be empty')));
 		    			exit;
 				endif;
 				if (!Zend_Validate::is($data['city'], 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'City should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('City should not be empty')));
 		    			exit;
 				endif;
 				if (!Zend_Validate::is($data['country_id'], 'NotEmpty') || $data['country_id'] == 'undefined'):
-					echo json_encode(array('status'=>'error','message'=>'Country_id should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Country_id should not be empty')));
 		    			exit;
 				endif;
-				if (!Zend_Validate::is($data['region'], 'NotEmpty')):
+
+			
+				if (!Zend_Validate::is($data['region'], 'NotEmpty') AND !Zend_Validate::is($data['region_id'], 'NotEmpty')):
 					echo json_encode(array('status'=>'error','message'=>'Region should not be empty'));
 		    			exit;
 				endif;
 				if (!Zend_Validate::is($data['postcode'], 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Postcode should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Postcode should not be empty')));
 		    			exit;
 				endif;
 				if (!Zend_Validate::is($data['telephone'], 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Telephone should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Telephone should not be empty')));
 		    			exit;
 				endif;
 				
 				if($data['firstname']==null):
 					echo json_encode ( array (
 						'status' => 'error',
-						'message' => 'please enter the firstname,'));
+						'message' => $this->__('please enter the firstname,')));
 				endif;
 					
 				
@@ -320,13 +332,18 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
                     'street' => $data['street'],
                     'city' =>  $data['city'],
                     'country_id' =>  $data['country_id'],
-                    'region' =>  $data['region'],                   
+                    //'region' =>  $data['region'],                   
                     'postcode' =>  $data['postcode'],
                     'telephone' =>  $data['telephone'],
                     'fax' => @$data['fax'],
                     'is_default_billing' => '1',
                     'is_default_shipping' => '1',
                 );
+				if($data['region'])
+					$addressData['region'] = $data['region'];
+				else
+					$addressData['region_id'] = $data['region_id'];
+
 
 				$address = Mage::getModel("customer/address");
 			    $address->addData($addressData);
@@ -335,7 +352,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				try{
 				    $address->save();
 				    $result['id']=$address->getId();
-				    $result['message']='Address added successfully.';
+				    $result['message']= $this->__('Address added successfully.');
 				    $result['status']='success';
 						
 				    echo json_encode($result);
@@ -344,7 +361,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				    
 				    echo json_encode ( array (
 						'status' => 'error',
-						'message' => $e->getMessage() 
+						'message' => $this->__($e->getMessage())
 				) );
 				}
 
@@ -355,13 +372,20 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 				echo json_encode ( array (
 						'status' => 'error',
-						'message' => 'No matched email data.' 
+						'message' => $this->__('No matched email data.') 
 				) );
 				$session->logout(); 
 			}
  		
  		} catch (Exception $e) {
- 			echo $e->getMessage();
+
+
+ 			echo json_encode ( array (
+						'status' => 'error',
+						'message' => $e->getMessage() 
+				) );
+ 			
+
  		}
 
  		
@@ -398,7 +422,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
  		else:
 				echo json_encode ( array (
 										'code' => '0x0001',
-										'message' => 'No matched email data.' 
+										'message' => $this->__('No matched email data.')
 								) );
  			endif;
 
@@ -450,14 +474,14 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 				echo json_encode ( array (
 						'code' => '0x0001',
-						'message' => 'No matched email data.' 
+						'message' => $this->__('No matched email data.') 
 				) );
 				$session->logout(); 
 			}
  		
  		} catch (Exception $e) {
  			
- 			echo $e->getMessage();
+ 			echo $this->__($e->getMessage());
  		}
 
  		
@@ -510,10 +534,10 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		if($data):
 		
 			Mage::helper('pushnotification')->registerdevice($data);
-			echo json_encode(array('status'=>'success','message'=>'successfully registered.'));
+			echo json_encode(array('status'=>'success','message'=> $this->__('successfully registered.')));
 			exit;
 		else:
-			echo json_encode(array('status'=>'error','message'=>'Error in data format.'));
+			echo json_encode(array('status'=>'error','message'=> $this->__('Error in data format.')));
 		endif;
  		
  	}
@@ -617,10 +641,10 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
                      $name= $item->getName();
                      //echo $item->getName();
                      if($item->getOriginalPrice() > 0) {
-                     	$unitPrice =  number_format($this->convert_currency(floatval($item->getOriginalPrice()),$basecurrencycode,$currency), 2, '.', '');
+                     	$unitPrice =  number_format($item->getOriginalPrice(), 2, '.', '');
                      }
                      else {
-                     	$unitPrice =   number_format($this->convert_currency(floatval($item->getPrice()),$basecurrencycode,$currency), 2, '.', '');
+                     	$unitPrice =   number_format($item->getPrice(), 2, '.', '');
                      }
                      
                      $sku=$item->getSku();
@@ -652,13 +676,13 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
                      "order_id" => $order->getRealOrderId(),
                      "status" => $order->getStatus(),
                      "order_date" => $order_date,
-                     "grand_total" => number_format($this->convert_currency(floatval($order->getGrandTotal()),$basecurrencycode,$currency), 2, '.', ''),
+                     "grand_total" => number_format($order->getGrandTotal(), 2, '.', ''),
                      "shipping_address" => $shippadd,
                      "billing_address" => $billadd,
                      "shipping_message" => $order->getShippingDescription(),
-                     "shipping_amount" => number_format($this->convert_currency(floatval($order->getShippingAmount()),$basecurrencycode,$currency), 2, '.', ''),
+                     "shipping_amount" => number_format($order->getShippingAmount(), 2, '.', ''),
                      "payment_method" => $payment_result,
-                     "tax_amount" => number_format($this->convert_currency(floatval($order->getTaxAmount()),$basecurrencycode,$currency), 2, '.', ''),
+                     "tax_amount" => number_format($order->getTaxAmount(), 2, '.', ''),
                      "products" => $productlist,
                      "order_currency" => $order->getOrderCurrencyCode(),
                      "order_currency_symbol" => Mage::app()->getLocale()->currency($order->getOrderCurrencyCode())->getSymbol(),
@@ -681,7 +705,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		} 
 		else{
 
-				echo json_encode(array('status'=>'error','message'=>'Please Login to see the Orders'));
+				echo json_encode(array('status'=>'error','message'=> $this->__('Please Login to see the Orders')));
 
 		}
 
@@ -730,7 +754,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				endif;
 
 		else:
-			echo json_encode(array('status' => 'error','message'=>'Login First.'));
+			echo json_encode(array('status' => 'error','message'=> $this->__('Login First.')));
 			exit;
 
 		endif;
@@ -765,38 +789,154 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			$data = Mage::app()->getRequest ()->getParam ('data');
 
 			
-			$customer_info = json_decode($data, true);		
+			$customer_info = json_decode($data, true);
+				
 		    if(isset($customer_info)){ 		            
 		         	
 		            
 		            $customer->setFirstname($customer_info['firstname']);
 		         	$customer->setLastname($customer_info['lastname']);
 
-		         	$address = $customer->getPrimaryBillingAddress();	         
+		         	$address = $customer->getPrimaryBillingAddress();	
 
+		         	if(!$address):
+		          			 $address = Mage::getModel("customer/address");	
+		          			 $address->setCustomerId($customer->getId());
+		          			 $address->setIsDefaultBilling(true);	          			
+		          	endif;
+	         		
 		            $address->setFirstname($customer_info['firstname']);
 		         	$address->setLastname($customer_info['lastname']);		         	
-		          	$address->setPhoneno($customer_info['telephone']);
-		            $address->setCity($customer_info['city']);
-		            $address->setState($customer_info['region']);
-		            $address->setCountry($customer_info['country']);
-		            $address->setPostcode($customer_info['postcode']);
+		          	$address->setPhoneno($customer_info['telephone']?:'null');
+		            $address->setCity($customer_info['city']?:'null');
+		            $address->setState($customer_info['region']?:'null');
+		            $address->setCountry($customer_info['country']?:'null');
+		            $address->setPostcode($customer_info['postcode']?:'null');
+
+
 				try{
+
 					$address->save();
 				    $customer->save();
-				    echo json_encode(array('status' => 'success','message'=>'Data Updated successfully'));	
+				    echo json_encode(array('status' => 'success','message'=> $this->__('Data Updated successfully')));	
 				}
 				catch(exception $e){
-					echo json_encode(array('status' => 'error','message'=>'Data Not Updated'));				  
+					echo json_encode(array('status' => 'error','message'=> $this->__('Data Not Updated')));				  
 				}
 	        }else{
-	        		echo json_encode(array('status' => 'error','message'=>'Data Not Updated'));
+	        		echo json_encode(array('status' => 'error','message'=> $this->__('Data Not Updated')));
 	     	}
 		} 
 		else {
-			echo json_encode(array('status' => 'error','message'=>'Login First.'));
+			echo json_encode(array('status' => 'error','message'=> $this->__('Login First.')));
 		}
 
 	}
+
+	/*Clear wishList API*/
+	/*
+	 URL : baseurl/restapi/customer/editCustomerAddress
+	 Name : editCustomerAddress
+	 Method : GET
+	 Required fields : addressId*,addressData*
+	 Response : JSON
+
+	*/
+	 public function editCustomerAddressAction(){
+
+	 	if (Mage::getSingleton ( 'customer/session' )->isLoggedIn()):
+
+	 		$addressId = $this->getRequest ()->getParam ('addressId');
+	 		$addressData = json_decode($this->getRequest ()->getParam ('addressData'),1);
+
+	 		$customer = Mage::getModel('customer/customer')->load(Mage::getSingleton ( 'customer/session' )->getCustomer()->getId());
+	 		$customer->setFirstname($addressData['firstname']); 
+		    $customer->setLastname ($addressData['lastname']); 
+		     
+
+			$address = Mage::getModel('customer/address')->load($addressId);
+			$address->addData($addressData);
+			$address->setCustomerId($address->getCustomer()->getId());
+		
+		
+			try {
+			    $address->setId($addressId);
+			    $address->save();
+			    $customer->save();
+			    echo  json_encode(array('status'=>'success','message'=>'Address Updated successfully.'));
+				exit;
+			}
+			catch (Mage_Core_Exception $e) {
+				echo  json_encode(array('status'=>'error','message'=>$e->getMessage()));
+				exit;
+			    
+			}	
+	 	else:
+			echo  json_encode(array('status'=>'error','message'=>'Kindly Signin first.'));
+			exit;
+		endif;
+	 }
+
+
+	 /*Change password APi*/
+
+	 /*
+	 URL : baseurl/restapi/customer/changePassword
+	 Name : changePassword
+	 Method : GET
+	 Required fields : oldpassword*,newpassword*
+	 Response : JSON
+
+	*/
+	 public function changePasswordAction(){
+
+		$validate = 0;
+		$result = '';
+		$customer = Mage::getSingleton ( 'customer/session' );
+
+		
+		if ($customer->isLoggedIn()):
+
+			$customerid = $customer->getCustomer()->getId();
+			$oldpassword = $this->getRequest ()->getParam ('oldpassword');
+			$newpassword = $this->getRequest ()->getParam ('newpassword');
+			$username = $customer->getCustomer()->getEmail();
+
+			$websiteId = Mage::getModel('core/store')->load($this->storeId)->getWebsiteId();
+			try {
+			     $login_customer_result = Mage::getModel('customer/customer')->setWebsiteId('1')->authenticate($username, $oldpassword);
+			     $validate = 1;
+			}
+			catch(Exception $ex) {
+			     $validate = 0;
+			}
+			if($validate == 1) {
+			     try {
+			          $customer = Mage::getModel('customer/customer')->load($customerid);
+			          $customer->setPassword($newpassword);
+			          $customer->save();
+			          
+			          echo  json_encode(array('status'=>'success','message'=>'Your Password has been Changed Successfully'));
+				 	  exit;
+			     }
+			     catch(Exception $ex) {
+			     	echo  json_encode(array('status'=>'error','message'=>'Error : '.$ex->getMessage()));
+				 	exit;
+			          
+			     }
+			}
+			else {
+			     
+			     echo  json_encode(array('status'=>'error','message'=>'Incorrect Old Password.'));
+				 exit;
+			}
+			
+		else:
+			echo  json_encode(array('status'=>'error','message'=>'Kindly Signin first.'));
+			exit;
+		endif;
+
+
+	 }
 
 } 

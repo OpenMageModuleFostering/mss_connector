@@ -18,7 +18,7 @@ class Mss_Connector_FeedbackController extends Mage_Core_Controller_Front_Action
 			$message = Mage::app()->getRequest()->getParams('message');
 
 			if($email):
-				  $result['message']='Thanks for your valuable feedback.';
+				  $result['message']= $this->__('Thanks for your valuable feedback.');
 				    $result['status']='success';
 						
 						 echo json_encode($result);
@@ -28,7 +28,7 @@ class Mss_Connector_FeedbackController extends Mage_Core_Controller_Front_Action
 
 		 echo json_encode ( array (
 						'status' => 'error',
-						'message' =>'please enter the email !!' 
+						'message' => $this->__('please enter the email !!' )
 				) );
 
 	}

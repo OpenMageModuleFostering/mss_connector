@@ -116,7 +116,7 @@ class Mss_Pushnotification_Helper_Data extends Mage_Core_Helper_Abstract
 	 
 		$fields = array(
 		    'registration_ids' => $registration_id,
-		    'data' => $message
+		    'data' => $this->__($message)
 		    
 		);
 	 	

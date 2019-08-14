@@ -59,14 +59,14 @@ class Mss_Connector_CreditController extends Mage_Core_Controller_Front_Action{
     {
        $customer_id=Mage::app ()->getRequest ()->getParam ( 'customer_id' );
 	if (!Zend_Validate::is($customer_id, 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Customer Id should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Customer Id should not be empty')));
 		    			exit;
 	endif;
 	$customer = Mage::getModel('customer/customer')->load($customer_id);
 	if(count($customer->getData())>0):
        		echo json_encode('The credit balance of customer id '.$customer_id.'is'.$customer->getCreditValue()); 
 	else:
-		echo json_encode(array('status'=>'error','message'=>'CustomerId does not exist'));
+		echo json_encode(array('status'=>'error','message'=> $this->__('CustomerId does not exist')));
 	endif;
         
     }
@@ -80,23 +80,23 @@ class Mss_Connector_CreditController extends Mage_Core_Controller_Front_Action{
 	$amount_credit=Mage::app ()->getRequest ()->getParam ( 'amount_credit' );
         
 	if (!Zend_Validate::is($customer_id, 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Customer Id should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Customer Id should not be empty')));
 		    			exit;
 	endif;
 	
 	if (!Zend_Validate::is($transaction_type, 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Transaction Type should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Transaction Type should not be empty')));
 		    			exit;
 	endif;
 	
 	if (!Zend_Validate::is($amount_credit, 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Amount Credit should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Amount Credit should not be empty')));
 		    			exit;
 	endif;
         
         Mage::getModel('customercredit/transaction')->addTransactionHistory($customer_id, $transaction_type, $transaction_detail, $order_id, $amount_credit);
         $this->updateBalance($customer_id, $amount_credit);
-	echo json_encode(array('status'=>'success','message'=>'Credit has been updated'));
+	echo json_encode(array('status'=>'success','message'=> $this->__('Credit has been updated')));
     }
 
     public function redeemCreditAction()
@@ -105,27 +105,27 @@ class Mss_Connector_CreditController extends Mage_Core_Controller_Front_Action{
         $customer_id=Mage::app ()->getRequest ()->getParam ( 'customer_id' );
 	$creditcode=Mage::app ()->getRequest ()->getParam ( 'creditcode' );
 	if (!Zend_Validate::is($customer_id, 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Customer Id should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Customer Id should not be empty')));
 		    			exit;
 	endif;
 	
 	if (!Zend_Validate::is($creditcode, 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'Credit Code should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Credit Code should not be empty')));
 		    			exit;
 	endif;
 	
         $credit = Mage::getModel('customercredit/creditcode')->getCollection()
             ->addFieldToFilter('credit_code', $creditcode);
 	if(count($credit->getData)):
-			echo json_encode(array('status'=>'error','message'=>'Customer ID does not be exist'));
+			echo json_encode(array('status'=>'error','message'=> $this->__('Customer ID does not be exist')));
 		    	exit;
 	endif;
         if ($credit->getSize() == 0) {
-          json_encode(array('status'=>'error','message'=>' Code is invalid. Please check again!'));  
+          json_encode(array('status'=>'error','message'=> $this->__('Code is invalid. Please check again!')));  
 		exit;
         } 
 	if ($credit->getFirstItem()->getStatus() != 1) {
-           json_encode(array('status'=>'error','message'=>' Code was used. Please check again!'));
+           json_encode(array('status'=>'error','message'=> $this->__('Code was used. Please check again!')));
         } 
 
             Mage::getModel('customercredit/creditcode')
@@ -133,7 +133,7 @@ class Mss_Connector_CreditController extends Mage_Core_Controller_Front_Action{
             $credit_amount = $credit->getFirstItem()->getAmountCredit();
             Mage::getModel('customercredit/transaction')->addTransactionHistory($customer_id, Magestore_Customercredit_Model_TransactionType::TYPE_REDEEM_CREDIT, "redeemcredit", "", $credit_amount);
             $this->updateBalance($customer_id, $credit_amount);
-            json_encode(array('status'=>'success','message'=>' Credit has been redeemed'));
+            json_encode(array('status'=>'success','message'=> $this->__(' Credit has been redeemed')));
         }
     }
 

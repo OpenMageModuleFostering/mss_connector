@@ -1,18 +1,29 @@
 <?php
 class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action {
 
+	public $storeId = "1";
+	public $viewId = "";
+	public $currency = "";
+
 	public function _construct(){
 
 		header('content-type: application/json; charset=utf-8');
 		header("access-control-allow-origin: *");
 		Mage::helper('connector')->loadParent(Mage::app()->getFrontController()->getRequest()->getHeader('token'));
+
+		$this->storeId = Mage::app()->getFrontController()->getRequest()->getHeader('storeId');
+		$this->viewId = Mage::app()->getFrontController()->getRequest()->getHeader('viewId');
+		$this->currency = Mage::app()->getFrontController()->getRequest()->getHeader('currency');
+		Mage::app()->setCurrentStore($this->storeId);
+		/*Mage::app()->getStore($this->storeId)->setCurrentCurrency($this->currency);*/
 		parent::_construct();
 		
 	}
 	
 	public function getcustomoptionAction() {
 		$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
-		$currentCurrency = Mage::app ()->getStore ()->getCurrentCurrencyCode ();
+		//$currentCurrency = Mage::app ()->getStore ()->getCurrentCurrencyCode ();
+		$currentCurrency = $this->currency;
 		$productid = $this->getRequest ()->getParam ( 'productid' );
 		$product = Mage::getModel ( "catalog/product" )->load ( $productid );
 		$selectid = 1;
@@ -69,10 +80,24 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 	} 
 
 	public function getproductdetailAction() {
+		$this->productdetail($this->getRequest ()->getParam ( 'productid' ));
+	}
+
+	public function getproductdetailByskuAction() {
+
+		$sku = $this->getRequest ()->getParam ('productsku');
+
+		$id = Mage::getModel('catalog/product')->getResource()->getIdBySku($sku);
+		if($id)$this->productdetail($id);
+		else echo "[]";
+	}
+
+	public function productdetail($productid) {
 		$productdetail = array ();
 		$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
-		$currentCurrency = Mage::app ()->getStore ()->getCurrentCurrencyCode ();
-		$productid = $this->getRequest ()->getParam ( 'productid' );
+		
+		$currentCurrency = $this->currency;
+		/*$productid = $this->getRequest ()->getParam ( 'productid' );*/
 		
 		$model = Mage::getModel ( "catalog/product" );
 		$product = $model->load ( $productid );
@@ -86,266 +111,269 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 				->addStatusFilter(Mage_Review_Model_Review::STATUS_APPROVED)
 				->setDateOrder()
 				->addRateVotes();				
-				$avg = 0;
-				$ratings = array();
-				$rdetails=array();
+		$avg = 0;
+		$ratings = array();
+		$rdetails=array();
+		$all_custom_option_array = array();
+		
+		if (count($reviews) > 0):
+			foreach ($reviews->getItems() as $review):
 				
-				if (count($reviews) > 0) {
-					foreach ($reviews->getItems() as $review) {
-						
-						$review_rating=0;
-						foreach( $review->getRatingVotes() as $vote ) {	
-							$review_rating = $vote->getPercent();						
-							$ratings[] = $vote->getPercent();
-						}
-						if($review_rating)
-						$rating_by = ($review_rating/20);
+				$review_rating=0;
 
-						$rdetails[]= array(
-									'title'=>$review->getTitle(),
-									'description'=>$review->getDetail(),
-									'reviewby'=>$review->getNickname(),
-									'rating_by'=>$rating_by,
-									'rating_date'=>date("d-m-Y", strtotime($review->getCreatedAt())),
-							);
-					}
-					$avg = array_sum($ratings)/count($ratings);
-				}
-			$rating=ceil($avg/20);
-			$reviews=$rdetails;
+				foreach( $review->getRatingVotes() as $vote ):
+					$review_rating = $vote->getPercent();						
+					$ratings[] = $vote->getPercent();
+				endforeach;
 
-		/*get product rating*/
+				if($review_rating)
+				$rating_by = ($review_rating/20);
 
-		if($product->getTypeId() == "configurable"):
-			$productdetail = array();
-			$config = $product->getTypeInstance(true);
+				$rdetails[]= array(
+							'title'=>$review->getTitle(),
+							'description'=>$review->getDetail(),
+							'reviewby'=>$review->getNickname(),
+							'rating_by'=>$rating_by,
+							'rating_date'=>date("d-m-Y", strtotime($review->getCreatedAt())),
+					);
+			endforeach;
+			$avg = array_sum($ratings)/count($ratings);
+		endif;
 
-			$conf = Mage::getModel('catalog/product_type_configurable')->setProduct($product);
-			$simple_collection = $conf->getUsedProductCollection()->addAttributeToSelect('*')->addFilterByRequiredOptions()->getData();
+	$rating=ceil($avg/20);
+	$reviews=$rdetails;
 
-			$storeUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA); 
-				$description =  nl2br ( $product->getDescription () );
-				$description = str_replace("{{media url=\"",$storeUrl,$description);
-				$description = str_replace("\"}}","",$description);
+	/*get product rating*/
+
+	if($product->getTypeId() == "configurable"):
+		$productdetail = array();
+		$config = $product->getTypeInstance(true);
+
+		$conf = Mage::getModel('catalog/product_type_configurable')->setProduct($product);
+		$simple_collection = $conf->getUsedProductCollection()->addAttributeToSelect('*')->addFilterByRequiredOptions()->getData();
+
+		$storeUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA); 
+		$description =  nl2br ( $product->getDescription () );
+		$description = str_replace("{{media url=\"",$storeUrl,$description);
+		$description = str_replace("\"}}","",$description);
+			
+			$c_ops=array();
+
+			if($product->getData('has_options')):
+				$has_custom_options = true;
+				// Start custom options
+				$all_custom_option_array = array();
+				$attVal = $product->getOptions();
+				$optStr = "";
+				$inc=0;
+				$has_custom_option = 0;
+
+				foreach($attVal as $optionKey => $optionVal):
 				
-				$c_ops=array();
+					$has_custom_option = 1;
+					$all_custom_option_array[$inc]['custom_option_name']=$optionVal->getTitle();
+					$all_custom_option_array[$inc]['custom_option_id']=$optionVal->getId();
+					$all_custom_option_array[$inc]['custom_option_is_required']=$optionVal->getIsRequire();
+					$all_custom_option_array[$inc]['custom_option_type']=$optionVal->getType();
+					$all_custom_option_array[$inc]['sort_order'] = $optionVal->getSortOrder();
+					$all_custom_option_array[$inc]['all'] = $optionVal->getData();
 
-				if ($product->getData('has_options'))
-				{
-					$has_custom_options = true;
-					// Start custom options
-					  $all_custom_option_array = array();
-					    $attVal = $product->getOptions();
-					    $optStr = "";
-					    $inc=0;
-					    $has_custom_option = 0;
-					    foreach($attVal as $optionKey => $optionVal)
-					     {
-					    
-					         $has_custom_option = 1;
-					         $all_custom_option_array[$inc]['custom_option_name']=$optionVal->getTitle();
-					         $all_custom_option_array[$inc]['custom_option_id']=$optionVal->getId();
-					         $all_custom_option_array[$inc]['custom_option_is_required']=$optionVal->getIsRequire();
-					         $all_custom_option_array[$inc]['custom_option_type']=$optionVal->getType();
-					         $all_custom_option_array[$inc]['sort_order'] = $optionVal->getSortOrder();
-					         $all_custom_option_array[$inc]['all'] = $optionVal->getData();
-					         if($all_custom_option_array[$inc]['all']['default_price_type'] == "percent") {
-					             $all_custom_option_array[$inc]['all']['price'] = number_format((($product->getFinalPrice()*round($all_custom_option_array[$inc]['all']['price']*10,2)/10)/100),2);
+					if($all_custom_option_array[$inc]['all']['default_price_type'] == "percent") 
+					 $all_custom_option_array[$inc]['all']['price'] = number_format((($product->getFinalPrice()*round($all_custom_option_array[$inc]['all']['price']*10,2)/10)/100),2);
+					else 
+					  $all_custom_option_array[$inc]['all']['price'] = number_format($all_custom_option_array[$inc]['all']['price'],2);
 					
-					         }
-					         else {
-					              $all_custom_option_array[$inc]['all']['price'] = number_format($all_custom_option_array[$inc]['all']['price'],2);
-					         } 
-								
-					           $all_custom_option_array[$inc]['all']['price'] = str_replace(",","",$all_custom_option_array[$inc]['all']['price']); 
-					           $all_custom_option_array[$inc]['all']['price'] = strval(round($this->convert_currency($all_custom_option_array[$inc]['all']['price'],$basecurrencycode,$currentcurrencycode),2));
 
-					         $all_custom_option_array[$inc]['custom_option_value_array'];
-					         $inner_inc =0;
+					$all_custom_option_array[$inc]['all']['price'] = str_replace(",","",$all_custom_option_array[$inc]['all']['price']); 
+					$all_custom_option_array[$inc]['all']['price'] = strval(round($this->convert_currency($all_custom_option_array[$inc]['all']['price'],$basecurrencycode,$currentcurrencycode),2));
 
-					         foreach($optionVal->getValues() as $valuesKey => $valuesVal)
-					             {
-					                $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['id'] = $valuesVal->getId();
-					                $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['title'] = $valuesVal->getTitle();
-					                
-									$defaultcustomprice = str_replace(",","",($valuesVal->getPrice())); 
-									$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price'] = strval(round($this->convert_currency($defaultcustomprice,$basecurrencycode,$currentcurrencycode),2));
-									
-									//$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price'] = number_format($valuesVal->getPrice(),2);
-					                $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price_type'] = $valuesVal->getPriceType();
-					                $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['sku'] = $valuesVal->getSku();
-					                $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['sort_order'] = $valuesVal->getSortOrder();
-					                if($valuesVal->getPriceType() == "percent") {
-						
-									$defaultcustomprice = str_replace(",","", ($product->getFinalPrice())); 
-									$customproductprice = strval(round($this->convert_currency($defaultcustomprice,$basecurrencycode,$currentcurrencycode),2));
-									$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price'] = str_replace(",","", round((floatval($customproductprice)  * floatval(round($valuesVal->getPrice(),1))/100),2));    
-               
-					                }
-					                $inner_inc++;
-					             }
-					         $inc++;
-					       }
+					$all_custom_option_array[$inc]['custom_option_value_array'];
+					$inner_inc =0;
 
-					 }
-				else
-				{	$has_custom_options = false;}
+					foreach($optionVal->getValues() as $valuesKey => $valuesVal):
+
+					    $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['id'] = $valuesVal->getId();
+					    $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['title'] = $valuesVal->getTitle();
+					    
+						$defaultcustomprice = str_replace(",","",($valuesVal->getPrice())); 
+						$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price'] = strval(round($this->convert_currency($defaultcustomprice,$basecurrencycode,$currentcurrencycode),2));
+						$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price_type'] = $valuesVal->getPriceType();
+					    $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['sku'] = $valuesVal->getSku();
+					    $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['sort_order'] = $valuesVal->getSortOrder();
+					    
+					    if($valuesVal->getPriceType() == "percent"):
+
+							$defaultcustomprice = str_replace(",","", ($product->getFinalPrice())); 
+							$customproductprice = strval(round($this->convert_currency($defaultcustomprice,$basecurrencycode,$currentcurrencycode),2));
+							$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price'] = str_replace(",","", round((floatval($customproductprice)  * floatval(round($valuesVal->getPrice(),1))/100),2));    
+						endif;
+					    
+					    $inner_inc++;
+					endforeach;
+
+				$inc++;
+				endforeach;
+
+				
+			else:
+				$has_custom_options = false;
+			endif;
+
+			$addtionatt=$this->_getAditional();
+
+			/*get confiogurable product attributes*/
+			Mage::register('product', $product);
+			Mage::helper('catalog/product')->setSkipSaleableCheck(true);
+			$config_attributes = new Mage_Catalog_Block_Product_View_Type_Configurable;
+			$condigurable_data = json_decode($config_attributes->getJsonConfig(),1);
+			$configurable = array();
+
+			foreach($condigurable_data['attributes'] as $key => $value)
+							$configurable[] = $value;
+
+			/*get confiogurable product attributes*/
+
+			$productdetail = array (
+					'entity_id' => $product->getId (),
+					'sku' => $product->getSku (),
+					'name' => $product->getName (),
+					'news_from_date' => $product->getNewsFromDate (),
+					'news_to_date' => $product->getNewsToDate (),
+					'special_from_date' => $product->getSpecialFromDate (),
+					'special_to_date' => $product->getSpecialToDate (),
+					'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','500','500'),
+					'url_key' => $product->getProductUrl().'?shareid='.$product->getId(),
+					'is_in_stock' => $product->isAvailable (),
+					'has_custom_options' => $has_custom_options,
+					'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
+					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
+													Mage::helper('connector')
+													->getFinalPriceByProductId($product->getId ()),
+													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+					'storeUrl' => $storeUrl,
+					'description' => $description,
+					'short_description'=>nl2br ($product->getShortDescription()),
+					'symbol' => Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
+					'weight'=>$product->getWeight(),
+					'review'=>$reviews,
+					'rating'=>$rating,
+					'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
+					'additional'=>$addtionatt,
+					'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
+			);
+
+			if(count($all_custom_option_array))
+			       $productdetail["custom_option"] = $all_custom_option_array;
+
+			if(count($configurable))
+					$productdetail["configurable"] = $configurable;
+				
+			echo json_encode ( $productdetail );
+		else:	
+			$storeUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA); 
+			$description =  nl2br ( $product->getDescription () );
+			$description = str_replace("{{media url=\"",$storeUrl,$description);
+			$description = str_replace("\"}}","",$description);
 			
 
-				$addtionatt=$this->_getAditional();
+			$c_ops=array();
 
-				/*get confiogurable product attributes*/
-				Mage::register('product', $product);
-				Mage::helper('catalog/product')->setSkipSaleableCheck(true);
-				$config_attributes = new Mage_Catalog_Block_Product_View_Type_Configurable;
-				$condigurable_data = json_decode($config_attributes->getJsonConfig(),1);
-				$configurable = array();
-				foreach($condigurable_data['attributes'] as $key => $value)
-								$configurable[] = $value;
-
-				/*get confiogurable product attributes*/
-
-				$productdetail = array (
-						'entity_id' => $product->getId (),
-						'sku' => $product->getSku (),
-						'name' => $product->getName (),
-						'news_from_date' => $product->getNewsFromDate (),
-						'news_to_date' => $product->getNewsToDate (),
-						'special_from_date' => $product->getSpecialFromDate (),
-						'special_to_date' => $product->getSpecialToDate (),
-						'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','500','500'),
-						'url_key' => $product->getProductUrl (),
-						'is_in_stock' => $product->isAvailable (),
-						'has_custom_options' => $has_custom_options,
-						'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getSpecialPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-						'storeUrl' => $storeUrl,
-						'description' => $description,
-						'short_description'=>nl2br ($product->getShortDescription()),
-						'symbol' => Mage::app ()->getLocale ()->currency ( Mage::app ()->getStore ()->getCurrentCurrencyCode () )->getSymbol () ,
-						'weight'=>$product->getWeight(),
-						'review'=>$reviews,
-						'rating'=>$rating,
-						'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-						'additional'=>$addtionatt,
-						//'configurable'=>$config->getConfigurableAttributesAsArray($product)
-						//'configurable'=>$configurable
-				);
-
-				if(count($all_custom_option_array))
-				       $productdetail["custom_option"] = $all_custom_option_array;
-
-				if(count($configurable))
-						$productdetail["configurable"] = $configurable;
-					
-					
-					
-				echo json_encode ( $productdetail );
-			else:	
-				$storeUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA); 
-				$description =  nl2br ( $product->getDescription () );
-				$description = str_replace("{{media url=\"",$storeUrl,$description);
-				$description = str_replace("\"}}","",$description);
+			if ($product->getData('has_options')):
+				$has_custom_options = true;
 				
+				$all_custom_option_array = array();
+				$attVal = $product->getOptions();
+				$optStr = "";
+				$inc=0;
+				$has_custom_option = 0;
+				foreach($attVal as $optionKey => $optionVal):
 
-				$c_ops=array();
+					$has_custom_option = 1;
+					$all_custom_option_array[$inc]['custom_option_name']=$optionVal->getTitle();
+					$all_custom_option_array[$inc]['custom_option_id']=$optionVal->getId();
+					$all_custom_option_array[$inc]['custom_option_is_required']=$optionVal->getIsRequire();
+					$all_custom_option_array[$inc]['custom_option_type']=$optionVal->getType();
+					$all_custom_option_array[$inc]['sort_order'] = $optionVal->getSortOrder();
+					$all_custom_option_array[$inc]['all'] = $optionVal->getData();
 
-				if ($product->getData('has_options'))
-				{
-					$has_custom_options = true;
-					// Start custom options
-					  $all_custom_option_array = array();
-					    $attVal = $product->getOptions();
-					    $optStr = "";
-					    $inc=0;
-					    $has_custom_option = 0;
-					    foreach($attVal as $optionKey => $optionVal)
-					     {
-					    
-					         $has_custom_option = 1;
-					         $all_custom_option_array[$inc]['custom_option_name']=$optionVal->getTitle();
-					         $all_custom_option_array[$inc]['custom_option_id']=$optionVal->getId();
-					         $all_custom_option_array[$inc]['custom_option_is_required']=$optionVal->getIsRequire();
-					         $all_custom_option_array[$inc]['custom_option_type']=$optionVal->getType();
-					         $all_custom_option_array[$inc]['sort_order'] = $optionVal->getSortOrder();
-					         $all_custom_option_array[$inc]['all'] = $optionVal->getData();
-					         if($all_custom_option_array[$inc]['all']['default_price_type'] == "percent") {
-					             $all_custom_option_array[$inc]['all']['price'] = number_format((($product->getFinalPrice()*round($all_custom_option_array[$inc]['all']['price']*10,2)/10)/100),2);
-					
-					         }
-					         else {
-					              $all_custom_option_array[$inc]['all']['price'] = number_format($all_custom_option_array[$inc]['all']['price'],2);
-					         } 
-								
-					           $all_custom_option_array[$inc]['all']['price'] = str_replace(",","",$all_custom_option_array[$inc]['all']['price']); 
-					           $all_custom_option_array[$inc]['all']['price'] = strval(round($this->convert_currency($all_custom_option_array[$inc]['all']['price'],$basecurrencycode,$currentcurrencycode),2));
+					if($all_custom_option_array[$inc]['all']['default_price_type'] == "percent")
+					 $all_custom_option_array[$inc]['all']['price'] = number_format((($product->getFinalPrice()*round($all_custom_option_array[$inc]['all']['price']*10,2)/10)/100),2);
+					else
+					  $all_custom_option_array[$inc]['all']['price'] = number_format($all_custom_option_array[$inc]['all']['price'],2);
 
-					         $all_custom_option_array[$inc]['custom_option_value_array'];
-					         $inner_inc =0;
 
-					         foreach($optionVal->getValues() as $valuesKey => $valuesVal)
-					             {
-					                $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['id'] = $valuesVal->getId();
-					                $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['title'] = $valuesVal->getTitle();
-					                
-									$defaultcustomprice = str_replace(",","",($valuesVal->getPrice())); 
-									$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price'] = strval(round($this->convert_currency($defaultcustomprice,$basecurrencycode,$currentcurrencycode),2));
-									
-									//$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price'] = number_format($valuesVal->getPrice(),2);
-					                $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price_type'] = $valuesVal->getPriceType();
-					                $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['sku'] = $valuesVal->getSku();
-					                $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['sort_order'] = $valuesVal->getSortOrder();
-					                if($valuesVal->getPriceType() == "percent") {
-						
-									$defaultcustomprice = str_replace(",","", ($product->getFinalPrice())); 
-									$customproductprice = strval(round($this->convert_currency($defaultcustomprice,$basecurrencycode,$currentcurrencycode),2));
-									$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price'] = str_replace(",","", round((floatval($customproductprice)  * floatval(round($valuesVal->getPrice(),1))/100),2));    
-               
-					                }
-					                $inner_inc++;
-					             }
-					         $inc++;
-					       }
+					$all_custom_option_array[$inc]['all']['price'] = str_replace(",","",$all_custom_option_array[$inc]['all']['price']); 
+					$all_custom_option_array[$inc]['all']['price'] = strval(round($this->convert_currency($all_custom_option_array[$inc]['all']['price'],$basecurrencycode,$currentcurrencycode),2));
 
-					 }
-				else
-				{	$has_custom_options = false;}
+					$all_custom_option_array[$inc]['custom_option_value_array'];
+					$inner_inc =0;
 
-				$addtionatt=$this->_getAditional();
-				$productdetail = array (
-						'entity_id' => $product->getId (),
-						'sku' => $product->getSku (),
-						'name' => $product->getName (),
-						'news_from_date' => $product->getNewsFromDate (),
-						'news_to_date' => $product->getNewsToDate (),
-						'special_from_date' => $product->getSpecialFromDate (),
-						'special_to_date' => $product->getSpecialToDate (),
-						'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','500','500'),
-						'url_key' => $product->getProductUrl (),
-						'is_in_stock' => $product->isAvailable (),
-						'has_custom_options' => $has_custom_options,
-						'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getSpecialPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-						'storeUrl' => $storeUrl,
-						'description' => $description,
-						'short_description'=>nl2br ($product->getShortDescription()),
-						'symbol' => Mage::app ()->getLocale ()->currency ( Mage::app ()->getStore ()->getCurrentCurrencyCode () )->getSymbol () ,
-						'weight'=>$product->getWeight(),
-						'qty'=>(int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty(),
-						'review'=>$reviews,
-						'rating'=>$rating,
-						'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-						'additional'=>$addtionatt
-				);
-				if(count($all_custom_option_array))
-				       $productdetail["custom_option"] = $all_custom_option_array;
+				    foreach($optionVal->getValues() as $valuesKey => $valuesVal):
+				     
+				        $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['id'] = $valuesVal->getId();
+				        $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['title'] = $valuesVal->getTitle();
+				        $defaultcustomprice = str_replace(",","",($valuesVal->getPrice())); 
+						$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price'] = strval(round($this->convert_currency($defaultcustomprice,$basecurrencycode,$currentcurrencycode),2));
+						$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price_type'] = $valuesVal->getPriceType();
+				        $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['sku'] = $valuesVal->getSku();
+				        $all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['sort_order'] = $valuesVal->getSortOrder();
+				        
+				        if($valuesVal->getPriceType() == "percent"):
+							$defaultcustomprice = str_replace(",","", ($product->getFinalPrice())); 
+							$customproductprice = strval(round($this->convert_currency($defaultcustomprice,$basecurrencycode,$currentcurrencycode),2));
+							$all_custom_option_array[$inc]['custom_option_value_array'][$inner_inc]['price'] = str_replace(",","", round((floatval($customproductprice)  * floatval(round($valuesVal->getPrice(),1))/100),2));    
+							endif;
+				        
+				        $inner_inc++;
+				    endforeach;
+				    $inc++;
 
+				endforeach;
+			else:
+				$has_custom_options = false;
+			endif;
+
+			$addtionatt=$this->_getAditional();
+			$productdetail = array (
+					'entity_id' => $product->getId (),
+					'sku' => $product->getSku (),
+					'name' => $product->getName (),
+					'news_from_date' => $product->getNewsFromDate (),
+					'news_to_date' => $product->getNewsToDate (),
+					'special_from_date' => $product->getSpecialFromDate (),
+					'special_to_date' => $product->getSpecialToDate (),
+					'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product_main','500','500'),
+					'url_key' => $product->getProductUrl().'?shareid='.$product->getId(),
+					'is_in_stock' => $product->isAvailable (),
+					'has_custom_options' => $has_custom_options,
+					'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
+					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
+													Mage::helper('connector')
+													->getFinalPriceByProductId($product->getId ()),
+													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+					'storeUrl' => $storeUrl,
+					'description' => $description,
+					'short_description'=>nl2br ($product->getShortDescription()),
+					'symbol' => Mage::helper('connector')->getCurrencysymbolByCode($this->currency) ,
+					'weight'=>$product->getWeight(),
+					'qty'=>(int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty(),
+					'review'=>$reviews,
+					'rating'=>$rating,
+					'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
+					'additional'=>$addtionatt,
+					'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
+			);
+			if(count($all_custom_option_array))
+			       $productdetail["custom_option"] = $all_custom_option_array;
+
+			
 				
-					
-				echo json_encode ( $productdetail );
+			echo json_encode ( $productdetail );
 
 		endif;
 	}
+
+
 	public function getPicListsAction() {
 		$productId = ( int ) $this->getRequest ()->getParam ( 'product' );
 		
@@ -356,7 +384,7 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 		foreach ($media as $_image ) {
 
 			$images [] = array (
-						'url' => Mage::helper('connector')-> Imageresize($_image->getFile (),'product','500','500'),
+						'url' => Mage::helper('connector')-> Imageresize($_image->getFile (),'product_main','500','500'),
 						'thumbnail' => Mage::helper('connector')-> Imageresize($_image->getFile (),'thumbnail','100','100'),
 						'position' => $_image->getPosition () 
 				);
@@ -365,7 +393,7 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 		if(!sizeof($images) && $_images->getImage()):
 
 			$images [] = array (
-						'url' => Mage::helper('connector')-> Imageresize($_images->getImage(),'product','500','500'),
+						'url' => Mage::helper('connector')-> Imageresize($_images->getImage(),'product_main','500','500'),
 						'thumbnail' => Mage::helper('connector')-> Imageresize($_images->getImage(),'thumbnail','100','100'),
 						'position' => 1 
 					);
@@ -505,48 +533,51 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 
 			$products = Mage::getModel('catalog/product')->getCollection();
 			$products->addAttributeToSelect(array('name','entity_id','status','visibility'),'inner')
-			->setPageSize ($limit)
-			->addAttributeToFilter('name', array('like' => '%'.$searchstring.'%'))
-			->addAttributeToFilter ( 'status', 1 )
-			->addAttributeToFilter ( 'visibility', array ('neq' => 1 ) )
-			->setPage ( $page, $limit );
+				->setPageSize ($limit)
+				->addAttributeToFilter('name', array('like' => '%'.$searchstring.'%'))
+				->addAttributeToFilter ( 'status', 1 )
+				->addAttributeToFilter ( 'visibility', array ('neq' => 1 ) )
+				->setPage ( $page, $limit );
 
-		        $productlist = array ();
-		        $baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
-		        $currentCurrency = Mage::app ()->getStore ()->getCurrentCurrencyCode ();
-		        foreach ( $products as $product ) {
-		               $product = Mage::getModel ( 'catalog/product' )->load ( $product ['entity_id'] );
-		            	$rating = Mage::getModel('rating/rating')->getEntitySummary($product->getId());
-	                    $rating_final = ($rating->getSum()/$rating->getCount())/20;
-		            
-		          
-		            $productlist [] = array (
-		                    'entity_id' => $product->getId (),
-		                    'sku' => $product->getSku (),
-		                    'name' => $product->getName (),
-		                    'news_from_date' => $product->getNewsFromDate (),
-		                    'news_to_date' => $product->getNewsToDate (),
-		                    'special_from_date' => $product->getSpecialFromDate (),
-		                    'special_to_date' => $product->getSpecialToDate (),
-		                    /*'image_url' => Mage::getModel('catalog/product_media_config')->getMediaUrl( $product->getImage() ),*/
-		                    'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
-		                    'url_key' => $product->getProductUrl (),
-		                    'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-		                    'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getSpecialPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-		                    'symbol'=> Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol(),
-		                    'qty'=>(int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty(),//$product->getStockItem()->getData('qty')
-		                    'rating' => $rating_final,
-		                    'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-		                     'categoryid' =>  end($product->getCategoryIds())
-		            );
-		        }
+	        $productlist = array ();
+	        $baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
+	        $currentCurrency = $this->currency;
+	        foreach ( $products as $product ) {
+	               $product = Mage::getModel ( 'catalog/product' )->load ( $product ['entity_id'] );
+	            	$rating = Mage::getModel('rating/rating')->getEntitySummary($product->getId());
+                    $rating_final = ($rating->getSum()/$rating->getCount())/20;
+	            
+	          
+	            $productlist [] = array (
+                    'entity_id' => $product->getId (),
+                    'sku' => $product->getSku (),
+                    'name' => $product->getName (),
+                    'news_from_date' => $product->getNewsFromDate (),
+                    'news_to_date' => $product->getNewsToDate (),
+                    'special_from_date' => $product->getSpecialFromDate (),
+                    'special_to_date' => $product->getSpecialToDate (),
+                    'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
+                    'url_key' => $product->getProductUrl (),
+                    'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
+                    'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
+													Mage::helper('connector')
+													->getFinalPriceByProductId($product->getId ()),
+													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+                    'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
+                    'qty'=>(int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty(),
+                    'rating' => $rating_final,
+                    'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
+                     'categoryid' =>  end($product->getCategoryIds()),
+                     'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
+	            );
+	        }
 
 			if(sizeof($productlist))
 				echo json_encode($productlist);
 			else
-				echo json_encode(array('status'=>'error','message'=>'There are no products matching the selection'));
+				echo json_encode(array('status'=>'error','message'=> $this->__('There are no products matching the selection')));
 		else:
-				echo json_encode(array('status'=>'error','message'=>'Search string is required'));
+				echo json_encode(array('status'=>'error','message'=> $this->__('Search string is required')));
 		endif;
 	}
 
@@ -575,20 +606,76 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 		        $attribute = Mage::getModel('catalog/resource_eav_attribute')->load($attributeId);
 		        $attributeOptions = $attribute ->getSource()->getAllOptions(false); 
 		       	
-		       	if($attribute->getAttributeCode() == 'price')
-		       		$result[] = array('code' => $attribute->getAttributeCode(), 'label'=>$attribute->getFrontendLabel(),'value'=>$this->getpricerange());
-		       	else
-		        	$result[] = array('code' => $attribute->getAttributeCode(), 'label'=>$attribute->getFrontendLabel(),'value'=>$attributeOptions);
-		    	
+			       	if($attribute->getAttributeCode() == 'price')
+			       		$result[] = array('code' => $attribute->getAttributeCode(), 'label'=>$attribute->getFrontendLabel(),'value'=>$this->getpricerange());
+			       	else
+			       		if($attributeOptions)
+			        		$result[] = array('code' => $attribute->getAttributeCode(), 'label'=>$attribute->getFrontendLabel(),'value'=>$attributeOptions);
+			    
 		    }
 
 		  echo json_encode($result);
 		}
 		catch(exception $e){
 
-			echo json_encode(array('status'=>'error','message'=>'Server side error'.$e->getMessage()));
+			echo json_encode(array('status'=>'error','message'=> $this->__('Server side error %s',$e->getMessage())));
 		}
 	}
 
 	/*getFilter API*/
+
+
+	/*Set rating API*/
+	/*
+	 URL : baseurl/restapi/products/setRating
+	 Name : setRating
+	 Method : GET
+	 Input Data : Parameters : rating:{"product_Id":"Id of product","customer_Id":"Customer Id","short_description":"Title of Review"
+			"description":"review description","name":"Customer name added in review box","rating_options":{"1":"4","2":"3"}}
+			}	
+		
+	 Response : JSON
+	*/
+	public function setRatingAction(){		
+
+		$rating = json_decode($this->getRequest ()->getParam('rating'),1);
+
+		$rating_points = json_decode($rating['rating_options'], true); 
+		$review = Mage::getModel('review/review');
+
+			$review->setEntityPkValue($rating['product_Id']);
+			$review->setTitle($rating['short_description']);
+			$review->setDetail($rating['description']);
+			$review->setEntityId(1); 
+			$review->setStoreId($this->storeId);  
+			$review->setTypeId(3);   
+			$review->setStatusId(1);
+			$review->setCustomerId($rating['customer_Id']?:NULL);
+			$review->setNickname($rating['name']);
+			$review->setReviewId($review->getId());
+			$review->setStores(array($this->storeId));
+			$review->save();				
+			
+			
+			foreach($rating_points as $rating_id => $option_id):
+				try {
+					$_rating = Mage::getModel('rating/rating')
+						->setRatingId($rating_id)
+						->setReviewId($review->getId())
+						->addOptionVote($option_id,$rating['product_Id']);
+				} catch (Exception $e) {
+					echo json_encode(array('status'=>'error','message'=>$e->getMessage()));
+					exit;
+				}
+			endforeach;
+			
+			$updateReview = Mage::getModel('review/review')->load($review->getId());
+			$updateReview->setCreatedAt(Mage::getModel('core/date')->date('Y-m-d H:i:s'));				
+			$updateReview->save();
+
+			echo json_encode(array('status'=>'success','message'=>'Review added sucessfully.'));
+			exit;
+	}
+
+	
 } 

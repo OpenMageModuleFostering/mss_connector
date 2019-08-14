@@ -2,7 +2,7 @@
   <config>
      <modules>
         <Mss_Connector>
-          <version>1.4.6</version>
+          <version>2.0.0</version>
         </Mss_Connector>
      </modules>
      <frontend>

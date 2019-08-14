@@ -6,7 +6,6 @@ class Mss_Sociallogin_Helper_Data extends Mage_Core_Helper_Abstract
 	private $f_url = 'https://graph.facebook.com/me?fields=first_name,last_name,gender,email&format=json&access_token=';
     private $g_url = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json&alt=json&access_token=';
 	private $sociallogin_type;
-	
 
 	public function socialloginRequest($token,$sociallogintype){
 		
@@ -27,7 +26,7 @@ class Mss_Sociallogin_Helper_Data extends Mage_Core_Helper_Abstract
 	private function sociallogin_support($sociallogintype)
 	{
 		if(!in_array($sociallogintype, $this->sociallogin_support)):
-			echo json_encode(array('status'=>'error','message'=>'Social Login is not supported by Magentomobileshop.'));
+			echo json_encode(array('status'=>'error','message'=> $this->__('Social Login is not supported by Magentomobileshop.')));
 			exit;
 		else:
 			return true;
@@ -45,7 +44,7 @@ class Mss_Sociallogin_Helper_Data extends Mage_Core_Helper_Abstract
 				$this->getgoogledetails($token);
 			break;
 			default:
-				echo json_encode(array('status'=>'error','message'=>'Social Login is not supported by Magentomobileshop.'));
+				echo json_encode(array('status'=>'error','message'=> $this->__('Social Login is not supported by Magentomobileshop.')));
 				exit;
 		}
 	}
@@ -58,7 +57,7 @@ class Mss_Sociallogin_Helper_Data extends Mage_Core_Helper_Abstract
 		if($response->email):
 			$this->checkuser($response);
 		else:
-			echo json_encode(array('status'=>'error','message'=>'Token is invalid.'));
+			echo json_encode(array('status'=>'error','message'=> $this->__('Token is invalid.')));
 			exit;
 		endif;
 	}
@@ -72,7 +71,7 @@ class Mss_Sociallogin_Helper_Data extends Mage_Core_Helper_Abstract
 		if($response->email):
 			$this->checkuser($response);
 		else:
-			echo json_encode(array('status'=>'error','message'=>'Token is invalid.'));
+			echo json_encode(array('status'=>'error','message'=> $this->__('Token is invalid.')));
 			exit;
 		endif;
 
@@ -92,7 +91,7 @@ class Mss_Sociallogin_Helper_Data extends Mage_Core_Helper_Abstract
 	 		endif;
 	 	}
 	 	catch(exception $e){
-	 		echo json_encode(array('status'=>'error','message'=>$e->getMessage()));
+	 		echo json_encode(array('status'=>'error','message'=> $this->__($e->getMessage())));
 	 			exit;
 	 	}
 
@@ -114,7 +113,7 @@ class Mss_Sociallogin_Helper_Data extends Mage_Core_Helper_Abstract
 				$customer->save(); 
 				if ($customer->isConfirmationRequired ()):
 					$customer->sendNewAccountEmail ( 'confirmation', $session->getBeforeAuthUrl (), Mage::app ()->getStore ()->getId () );
-					echo json_encode(array('status'=>'error','message'=>'Account confirmation required.'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('Account confirmation required.')));
 	 				exit;
 				else:
 					$session->setCustomerAsLoggedIn($customer);
@@ -126,7 +125,7 @@ class Mss_Sociallogin_Helper_Data extends Mage_Core_Helper_Abstract
 				
 			}
 			catch(Exception $ex){
-				echo json_encode(array('status'=>'error','message'=>'Error in creating user account.'));
+				echo json_encode(array('status'=>'error','message'=> $this->__('Error in creating user account.')));
  				exit;
 			}
 		

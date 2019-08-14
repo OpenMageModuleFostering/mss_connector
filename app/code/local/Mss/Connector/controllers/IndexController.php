@@ -1,12 +1,23 @@
 <?php
 class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 
+	public $storeId = "1";
+	public $viewId = "";
+	public $currency = "";
+
+
 	public function _construct(){
 
 		header('content-type: application/json; charset=utf-8');
 		header("access-control-allow-origin: *");
-		
 		Mage::helper('connector')->loadParent(Mage::app()->getFrontController()->getRequest()->getHeader('token'));
+
+		$this->storeId = Mage::app()->getFrontController()->getRequest()->getHeader('storeId');
+		$this->viewId = Mage::app()->getFrontController()->getRequest()->getHeader('viewId');
+		$this->currency = Mage::app()->getFrontController()->getRequest()->getHeader('currency');
+		Mage::app()->setCurrentStore($this->storeId);
+		/*Mage::app()->getStore($this->storeId)->setCurrentCurrency($this->currency);*/
+
 		parent::_construct();
 		
 	}
@@ -20,9 +31,9 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 
 	}
 
-	protected function getCategoryTree($recursionLevel, $storeId = 1)
+	protected function getCategoryTree($recursionLevel)
 	{
-		$parent = Mage::app()->getStore()->getRootCategoryId();    
+		$parent = Mage::app()->getStore($this->storeId)->getRootCategoryId();    
 		$tree = Mage::getResourceModel('catalog/category_tree');
 		
 
@@ -111,7 +122,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 		Mage::app ()->cleanCache ();
 		$cmd = $this->getRequest ()->getParam ( 'cmd' );
 		if (!Zend_Validate::is($cmd, 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'filter field should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('filter field should not be empty')));
 						exit;
 		endif;
 		switch ($cmd) {
@@ -153,7 +164,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 				else
 				{
 					
-					$_categorylist = array('status'=>'error','message'=>'No Record Found');
+					$_categorylist = array('status'=>'error','message'=> $this->__('No Record Found'));
 					exit;
 				}
 
@@ -167,7 +178,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 				$categoryid = $this->getRequest ()->getParam ( 'categoryid' );
 
 				if (!Zend_Validate::is($categoryid, 'NotEmpty')):
-					echo json_encode(array('status'=>'error','message'=>'category id should not be empty'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('category id should not be empty')));
 						exit;
 				endif;
 
@@ -180,7 +191,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 
 
 				if (!$category->getId()):
-						echo json_encode(array('status'=>'error','message'=>'category id does not exist'));
+						echo json_encode(array('status'=>'error','message'=> $this->__('category id does not exist')));
 						exit;
 				endif;
 
@@ -224,10 +235,10 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 				$collection=$collection->addAttributeToSort ( $order, $dir )/* ->setPage ( $page, $limit ) */;
 				$pages = $collection->setPageSize ( $limit )->getLastPageNumber ();
 				 $count=$collection->getSize();
-				
+
 				if(!$count):
 					
-					echo json_encode(array('status'=>'error','message'=>'No Record Found'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('No Record Found')));
 						exit;
 				endif;
 
@@ -279,7 +290,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 				 $count=$collection->getSize();
 				if(!$count):
 					
-					echo json_encode(array('status'=>'error','message'=>'No Record Found'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('No Record Found')));
 						exit;
 				endif;
 				if ($page <= $pages) {
@@ -343,7 +354,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 				 $count=$collection->getSize();
 				if(!$count):
 					
-					echo json_encode(array('status'=>'error','message'=>'No Record Found'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('No Record Found')));
 						exit;
 				endif;
 				if ($page <= $pages) {
@@ -394,7 +405,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 				$pages = $collection->setPageSize ( $limit )->getLastPageNumber ();
 				 $count=$collection->getSize();
 				if(!$count):
-					echo json_encode(array('status'=>'error','message'=>'No Record Found'));
+					echo json_encode(array('status'=>'error','message'=> $this->__('No Record Found')));
 						exit;
 				endif;
 				if ($page <= $pages) {
@@ -427,13 +438,13 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 			$newsTo=  substr($_productCollection->getData('news_to_date'),0,10);
 
 			if(!$_productCollection->count()):
-				echo json_encode(array('status'=>'error','message'=>'There are no products matching the selection'));
+				echo json_encode(array('status'=>'error','message'=> $this->__('There are no products matching the selection')));
 			 else:
 				if ($now>=$newsFrom && $now<=$newsTo)$i=0;
 				 
 				 $productlist = array ();
 			$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
-			$currentCurrency = Mage::app ()->getStore ()->getCurrentCurrencyCode ();
+			$currentCurrency = $this->currency;
 			foreach ( $_productCollection as $product ) {
 			
 				$product = Mage::getModel ( 'catalog/product' )->load ( $product ['entity_id'] );
@@ -451,11 +462,15 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 					'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
 					'url_key' => $product->getProductUrl (),
 					'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getSpecialPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-					'symbol'=> Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol(),
-					'qty'=>(int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty(),//$product->getStockItem()->getData('qty')
+					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
+													Mage::helper('connector')
+													->getFinalPriceByProductId($product->getId ()),
+													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+					'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
+					'qty'=>(int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty(),
 					'rating' => $rating_final,
 					'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
+					'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
 
 			);
 		}
@@ -484,16 +499,16 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 
 		$productlist = array ();
 		$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
-		$currentCurrency = Mage::app ()->getStore ()->getCurrentCurrencyCode ();
+		$currentCurrency = $this->currency;
 
-		foreach ( $products as $product ) {
-			if ($mod == 'catalog') {
+		foreach($products as $product):
+
+			if($mod == 'catalog'):
 				$product = Mage::getModel ( 'catalog/product' )->load ( $product ['entity_id'] );
-
 				$rating = Mage::getModel('rating/rating')->getEntitySummary($product->getId());
-					$rating_final = ($rating->getSum()/$rating->getCount())/20;
-				
-			}
+				$rating_final = ($rating->getSum()/$rating->getCount())/20;
+			endif;	
+			
 			if($product->getTypeId() == "configurable")
 						$qty = Mage::helper('connector')->getProductStockInfoById($product->getId());
 			else
@@ -514,11 +529,15 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 						'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
 						'url_key' => $product->getProductUrl (),
 						'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getSpecialPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-						'symbol'=> Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol()?: Mage::app()->getStore()->getCurrentCurrencyCode(),
-						'qty'=>$qty,//$product->getStockItem()->getData('qty')
+						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
+													Mage::helper('connector')
+													->getFinalPriceByProductId($product->getId ()),
+													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+						'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
+						'qty'=>$qty,
 						'rating' => $rating_final,
 						'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
+						'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
 					);
 				endif;
 			else:
@@ -534,14 +553,19 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 					'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
 					'url_key' => $product->getProductUrl (),
 					'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getSpecialPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-					'symbol'=> Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol()?: Mage::app()->getStore()->getCurrentCurrencyCode(),
-					'qty'=>$qty,//$product->getStockItem()->getData('qty')
+					'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
+													Mage::helper('connector')
+													->getFinalPriceByProductId($product->getId ()),
+													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+					'symbol'=> Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
+					'qty'=>$qty,
 					'rating' => $rating_final,
 					'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-			);
+					'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
+				);
 			endif;
-		}
+		endforeach;
+
 		return $productlist;
 	}
 
@@ -581,27 +605,29 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 		echo json_encode(array($topproductslist,$newproductslist,$saleproductslist)); die;
 	}
 
-	  public function getBestsellerProducts()
-		{
-			$products = Mage::getResourceModel('reports/product_collection')
-			->addOrderedQty()
-			->addAttributeToSelect('*')
-			->addAttributeToSelect(array('name', 'price', 'small_image'))
-			->addAttributeToFilter('visibility',array('eq'=>4))
-			// ->setStoreId($storeId)
-			// ->addStoreFilter($storeId)
-			
-			->addViewsCount();
+	public function getBestsellerProducts()
+	{
+		$products = Mage::getResourceModel('reports/product_collection')
+		->addOrderedQty()
+		->addAttributeToSelect('*')
+		->addAttributeToSelect(array('name', 'price', 'small_image'))
+		->addAttributeToFilter('visibility',array('eq'=>4))
+		->setStoreId($this->storeId)
+		->addStoreFilter($this->storeId)
+		->addViewsCount();
+
 		Mage::getSingleton('catalog/product_status')->addVisibleFilterToCollection($products);
 		Mage::getSingleton('catalog/product_visibility')->addVisibleInCatalogFilterToCollection($products);
 			
  		Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($products);
 		$products->setPageSize(5)->setCurPage(1);
 			//->getLastPageNumber ();
-				  $new_productlist = array ();
+				$new_productlist = array ();
 				$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
-				$currentCurrency = Mage::app ()->getStore ()->getCurrentCurrencyCode ();
+				$currentCurrency = $this->currency;
 				foreach ( $products as $product ) {
+
+						if(!$product['cat_index_position']) continue;
 					
 						$product = Mage::getModel ( 'catalog/product' )->load ( $product ['entity_id'] );
 						$rating = Mage::getModel('rating/rating')->getEntitySummary($product->getId());
@@ -623,11 +649,15 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 							'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
 							'url_key' => $product->getProductUrl (),
 							'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-							'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getSpecialPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-							'symbol'=>Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol()?: Mage::app()->getStore()->getCurrentCurrencyCode(),
+							'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
+													Mage::helper('connector')
+													->getFinalPriceByProductId($product->getId ()),
+													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+							'symbol'=>Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
 							'qty'=>$qty,
-							 'rating' => $rating_final,
-							 'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
+							'rating' => $rating_final,
+							'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
+							'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
 					);
 				}
 			return $new_productlist;
@@ -635,66 +665,79 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 	public function getnewproducts()
 	{
 		 # get New Products start
+		
 		$todayDate  = Mage::app()->getLocale()->date()->toString(Varien_Date::DATETIME_INTERNAL_FORMAT);
+		$_rootcatID = Mage::app($this->storeId)->getStore()->getRootCategoryId();
+
 		$_productCollection = Mage::getResourceModel('catalog/product_collection')
+				->joinField('category_id','catalog/category_product','category_id','product_id=entity_id',null,'left')
+				->addAttributeToFilter('category_id', array('in' => $_rootcatID))
 				->addAttributeToSelect('*')
 				->addAttributeToFilter('status',array('eq'=>1))
 				->setPageSize (5)
 				->addAttributeToFilter('visibility',array('eq'=>4))
 				->addAttributeToFilter('news_from_date', array('date' => true, 'to' => $todayDate))
 				->addAttributeToFilter('news_to_date', array('or'=> array(
-				0 => array('date' => true, 'from' => $todayDate),
-				1 => array('is' => new Zend_Db_Expr('null')))
-				), 'left');
+							0 => array('date' => true, 'from' => $todayDate),
+							1 => array('is' => new Zend_Db_Expr('null')))
+							), 'left')
+				->setStoreId($this->storeId)
+				;
+
 
 			$now = date('Y-m-d');
 			$newsFrom= substr($_productCollection->getData('news_from_date'),0,10);
 			$newsTo=  substr($_productCollection->getData('news_to_date'),0,10);
+
 			Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($_productCollection);
 			
 			if(!$_productCollection->count()):
 					return  $new_productlist = array ();
-			 else:
+			else:
 				if ($now>=$newsFrom && $now<=$newsTo)$i=0;
 				 
-				 $new_productlist = array ();
-				$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
-				$currentCurrency = Mage::app ()->getStore ()->getCurrentCurrencyCode ();
-				foreach ( $_productCollection as $product ) {
-					
-						$product = Mage::getModel ( 'catalog/product' )->load ( $product ['entity_id'] );
-						
-						$rating = Mage::getModel('rating/rating')->getEntitySummary($product->getId());
-						$rating_final = ($rating->getSum()/$rating->getCount())/20;
-
-					if($product->getTypeId() == "configurable")
-						$qty = Mage::helper('connector')->getProductStockInfoById($product->getId());
-					else
-						$qty  = (int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty();
-
-
-					$new_productlist [] = array (
-							'entity_id' => $product->getId (),
-							'sku' => $product->getSku (),
-							'name' => $product->getName (),
-							'news_from_date' => $product->getNewsFromDate (),
-							'news_to_date' => $product->getNewsToDate (),
-							'special_from_date' => $product->getSpecialFromDate (),
-							'special_to_date' => $product->getSpecialToDate (),
-							'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
-							'url_key' => $product->getProductUrl (),
-							'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-							'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getSpecialPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
-							'symbol'=>Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol()?: Mage::app()->getStore()->getCurrentCurrencyCode(),
-							'qty'=>$qty,
-							 'rating' => $rating_final,
-							 'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
-					);
-				}
-		
-				return $new_productlist;
+			$new_productlist = array ();
+			$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
+			$currentCurrency = $this->currency;
+			foreach ( $_productCollection as $product ) {
 				
-			endif;
+					$product = Mage::getModel ( 'catalog/product' )->load ( $product ['entity_id'] );
+					
+					$rating = Mage::getModel('rating/rating')->getEntitySummary($product->getId());
+					$rating_final = ($rating->getSum()/$rating->getCount())/20;
+
+				if($product->getTypeId() == "configurable")
+					$qty = Mage::helper('connector')->getProductStockInfoById($product->getId());
+				else
+					$qty  = (int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty();
+
+
+				$new_productlist [] = array (
+						'entity_id' => $product->getId (),
+						'sku' => $product->getSku (),
+						'name' => $product->getName (),
+						'news_from_date' => $product->getNewsFromDate (),
+						'news_to_date' => $product->getNewsToDate (),
+						'special_from_date' => $product->getSpecialFromDate (),
+						'special_to_date' => $product->getSpecialToDate (),
+						'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
+						'url_key' => $product->getProductUrl (),
+						'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
+						'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert (
+													Mage::helper('connector')
+													->getFinalPriceByProductId($product->getId ()),
+													 $baseCurrency, $currentCurrency ), 2, '.', '' ),
+						'symbol'=>Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
+						'qty'=>$qty,
+						'rating' => $rating_final,
+						'wishlist' =>  Mage::helper('connector')->check_wishlist($product->getId ()),
+						'specialprice'=>Mage::helper('connector')->getSpecialPriceByProductId($product->getId ()),
+				);
+			}
+	
+			return $new_productlist;
+			
+		endif;
 
 	}
 
@@ -714,6 +757,8 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 				$tomorrow = mktime ( 0, 0, 0, date ( 'm' ), date ( 'd' ) + 1, date ( 'y' ) );
 				$dateTomorrow = date ( 'm/d/y', $tomorrow );
 				
+				$_rootcatID = Mage::app($this->storeId)->getStore()->getRootCategoryId();
+
 				$collection = Mage::getModel ( 'catalog/product' )->getCollection ();
 				$collection->addAttributeToSelect ( '*' )->addAttributeToFilter ( 'visibility', array (
 
@@ -735,6 +780,11 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 								'null' => 1 
 						) 
 				) )
+
+				->joinField('category_id','catalog/category_product','category_id','product_id=entity_id',null,'left')
+				->addAttributeToFilter('category_id', array('in' => $_rootcatID))
+
+				->setStoreId($this->storeId)
 				->addAttributeToFilter('visibility',array('eq'=>4))
 				->addAttributeToSort ( $order, $dir );
 				$pages = $collection->setPageSize ( $limit )->getLastPageNumber ();

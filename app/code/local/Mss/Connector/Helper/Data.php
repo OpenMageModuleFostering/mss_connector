@@ -26,6 +26,10 @@ class Mss_Connector_Helper_Data extends Mage_Core_Helper_Abstract
 			    	$_media_dir =  Mage::getBaseDir('media') . DS . 'catalog' . DS . 'product' ;
 			    endif;
 
+			  if($type == 'product_main'):
+			    	$_media_dir =  Mage::getBaseDir('media') . DS . 'catalog' . DS . 'product' ;
+			    endif;
+
 		        $_image = new Varien_Image($_media_dir . $_file_name);
 
 		        $_image->constrainOnly(true);
@@ -177,7 +181,7 @@ class Mss_Connector_Helper_Data extends Mage_Core_Helper_Abstract
 				
 			}
 			catch(Exception $ex){
-				echo json_encode(array('status'=>'error','message'=>$ex->getMessage()));
+				echo json_encode(array('status'=>'error','message'=> $this->__($ex->getMessage())));
  				exit;
 			}
 
@@ -193,5 +197,50 @@ class Mss_Connector_Helper_Data extends Mage_Core_Helper_Abstract
 				$stock_product = Mage::getModel('cataloginventory/stock_item')->loadByProduct($productId);
          		$stock_data = $stock_product->getIsInStock();
          		return $stock_data;
+		}
+
+		public function getCurrencysymbolByCode($code){
+
+				return Mage::app()->getLocale()->currency($code)->getSymbol()?:$code;
+		}
+
+		public function getSpecialPriceByProductId($productId)
+		{
+			$product = Mage::getModel('catalog/product')->load($productId);
+		    $specialprice = $product->getSpecialPrice(); 
+		    $specialPriceFromDate = $product->getSpecialFromDate();
+		    $specialPriceToDate = $product->getSpecialToDate();
+		    
+		    $today =  time();
+		 
+		    if ($specialprice):
+		        if($today >= strtotime( $specialPriceFromDate) && $today <= strtotime($specialPriceToDate) || $today >= strtotime( $specialPriceFromDate) && is_null($specialPriceToDate))
+		        		return $specialprice;
+		        else return '0.00';
+		    else:
+		    	return '0.00';
+		   	endif;
+
+
+		}
+
+		public function getFinalPriceByProductId($productId)
+		{
+			$product = Mage::getModel('catalog/product')->load($productId);
+		    $specialprice = $product->getSpecialPrice(); 
+		    $specialPriceFromDate = $product->getSpecialFromDate();
+		    $specialPriceToDate = $product->getSpecialToDate();
+		    
+		    $today =  time();
+		 
+		    if ($specialprice):
+		        if($today >= strtotime( $specialPriceFromDate) && $today <= strtotime($specialPriceToDate) || $today >= strtotime( $specialPriceFromDate) && is_null($specialPriceToDate))
+		        		return $specialprice;
+		        else return '';
+		    else:
+		    	return '';
+		   	endif;
+
+
 		}
 }
