@@ -59,7 +59,7 @@ class Mss_Bannersliderapp_Helper_Data extends Mage_Core_Helper_Abstract
         $subDir2 = substr($subname, 1, 1);
         $array[0] = $subDir1;
         $array[1] = $subDir2;
-        $name = $array[0] . '/' . $array[1] . '/' . $imageName;
+        $name = $array[0] . '/' ._. '/' . $imageName;
 
         return strtolower($name);
     }

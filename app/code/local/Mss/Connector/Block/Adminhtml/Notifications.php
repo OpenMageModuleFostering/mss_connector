@@ -8,13 +8,13 @@ class Mss_Connector_Block_Adminhtml_Notifications extends Mage_Adminhtml_Block_T
 
 	public function getMessage()
 	{
-	  	$href ='';
+	  	/*$href ='';
 		if(!Mage::getStoreConfig(self::XML_SECURE_KEY))
 
         	$href = '<strong class="label">Magentomobileshop</strong> extension is not activated yet, <a href="'.self::ACTIVATION_URL.'?email='.Mage::getStoreConfig(self::TRNS_EMAIL).'&url='.Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB)
         		.'" target="_blank">Click here</a> to activate your extension.';
               
-        return $href;
+        return $href;*/
 
       
 	}
