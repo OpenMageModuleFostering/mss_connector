@@ -35,21 +35,18 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 	{
 		$parent = Mage::app()->getStore($this->storeId)->getRootCategoryId();    
 		$tree = Mage::getResourceModel('catalog/category_tree');
-		
-
-		$nodes = $tree->loadNode($parent)
+			  
+    	$nodes = $tree->loadNode($parent)
 			->loadChildren()
 			->getChildren();
-		$tree->addCollectionData(null, false, $parent,true,false);
-
-		$categoryTreeData = array();
-		foreach ($nodes as $node) {
-			if($node->getIsActive())
-				$categoryTreeData[] = $this->getNodeChildrenData($node);
-			
-		}
-
-		return $categoryTreeData;
+	    	$tree->addCollectionData(null, false, $parent,true,false);
+			$categoryTreeData = array();
+			$category_model = Mage::getModel('catalog/category');
+			foreach ($nodes as $node) {
+				if($node->getIsActive() && $category_model->load($node->getId())->getIncludeInMenu()) 
+					$categoryTreeData[] = $this->getNodeChildrenData($node);
+        	}
+		    return $categoryTreeData;
 	}
 
 	protected function getNodeChildrenData(Varien_Data_Tree_Node $node)

@@ -30,7 +30,20 @@ class Mss_Connector_Adminhtml_SupportController extends Mage_Adminhtml_Controlle
 		}
 		return  $msg;
 	}
-		public function landingAction() {  ?>
+		public function landingAction() {
+
+	    //$mssData[0]  = '';
+		$version = Mage::getConfig()->getModuleConfig('Mss_Connector')->version;
+		$session = Mage::getSingleton('core/session')->getAppDatas();
+
+		$array = array();
+		$array['version'] = $version;
+		$push = array_merge($session,$array);
+		$data = json_encode($push); 
+  	    $final_data = base64_encode($data);
+  	 	// echo "<pre>";print_r($final_data);die();
+
+		  ?>
   		<div class="loading">  <?php
 	  		$image = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN)."/frontend/base/default/images/magentomobileshop/magento_logo.png";
 
@@ -185,12 +198,12 @@ class Mss_Connector_Adminhtml_SupportController extends Mage_Adminhtml_Controlle
 
   		<?php
 
-  		$secure_key = Mage::getStoreConfig('magentomobileshop/secure/key');
-  	    $decode = base64_encode($secure_key); 
+/*  		$secure_key = Mage::getStoreConfig('magentomobileshop/secure/key');
+  	    $decode = base64_encode($secure_key); */
   		echo "<script src='http://code.jquery.com/jquery-latest.js'></script>  
   		<script type='text/javascript'>
-  			$(document).ready(function() {
-  				window.location.href = 'https://www.magentomobileshop.com/user/activating-app?app=".$decode."' ;
+  			jQuery(document).ready(function() {
+  				window.location.href = 'https://www.magentomobileshop.com/user/activating-app?app=".$final_data."' ;
   				
   			});	
   		</script>";

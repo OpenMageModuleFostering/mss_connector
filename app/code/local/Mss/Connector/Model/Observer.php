@@ -9,12 +9,14 @@ class Mss_Connector_Model_Observer
 	public function notificationMessage()
 	{
 	    $adminsession = Mage::getSingleton('admin/session', array('name'=>'adminhtml'));
-	  	if(!Mage::getStoreConfig('web/url/use_store')):
-	  		$mssSwitch = new Mage_Core_Model_Config();
-	  		$mssSwitch->saveConfig('web/url/use_store', 1);
-	  	endif;
-
-  		
+		$allStores = Mage::app()->getStores();
+		$_storeId = count($allStores);
+		if($_storeId>1){
+		  	if(!Mage::getStoreConfig('web/url/use_store')):
+		  		$mssSwitch = new Mage_Core_Model_Config();
+		  		$mssSwitch->saveConfig('web/url/use_store', 1);
+		  	endif;
+		}
 
 	  	$url =  Mage::helper('core/url')->getCurrentUrl('key');
      	$url_path = parse_url($url, PHP_URL_PATH);
@@ -40,22 +42,25 @@ class Mss_Connector_Model_Observer
 			$mssSwitch = new Mage_Core_Model_Config();
 			$mssSwitch->saveConfig(self::XML_SECURE_KEY, $mssAppData);
 			$mssSwitch->saveConfig(self::XML_SECURE_KEY_STATUS, '1');
+			$locale = Mage::app()->getLocale()->getLocaleCode();
+			$lang = explode("_",$locale);
 
 	    	$mssData = array();
-	    	$mssData['final_url'] = $final_url;
-	    	$mssData['mms_id'] = base64_encode($mssAppData);
-			$mssData['default_store_name'] = Mage::app()->getDefaultStoreView()->getCode();
-			$mssData['default_store_id'] = Mage::app()->getWebsite(true)->getDefaultGroup()
-							   				 ->getDefaultStoreId();
-			$mssData['default_view_id'] = Mage::app()->getDefaultStoreView()->getId();
-			$mssData['default_store_currency'] = Mage::app()->getStore()->getCurrentCurrencyCode();
-			$mssData['version']  = Mage::getConfig()->getModuleConfig("Mss_Connector")->version;
-			$mssData['status'] = 'true';
+	    	//$mssData[0]['final_url'] = $final_url;
+	    	$mssData[0]['mms_id'] = base64_encode($mssAppData);
+			$mssData[0]['default_store_name'] = Mage::app()->getDefaultStoreView()->getCode();
+			$mssData[0]['default_store_id'] = Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId();
+			$mssData[0]['default_view_id'] = Mage::app()->getDefaultStoreView()->getId();
+			$mssData[0]['default_store_currency'] = Mage::app()->getStore()->getCurrentCurrencyCode();
+			$mssData[0]['language'] = $lang[0];
+			//$mssData[0]['version']  = Mage::getConfig()->getModuleConfig("Mss_Connector")->version;
+			$mssData[0]['status'] = 'true';
 
 			Mage::app()->getCacheInstance()->cleanType('config');
+			Mage::getSingleton('core/session')->setAppDatas($mssData[0]);
 			Mage::unregister('mms_app_data');
 
-			$fields_string='';
+/*			$fields_string='';
 			foreach($mssData as $key=>$value) { $fields_string .= $key.'='.$value.'&'; }
 			rtrim($fields_string,'&');
 
@@ -66,7 +71,7 @@ class Mss_Connector_Model_Observer
 			curl_setopt($ch,CURLOPT_POSTFIELDS,$fields_string);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 			$result = curl_exec($ch); 
-			curl_close($ch);
+			curl_close($ch);*/
 			Mage::app()->getResponse()->setRedirect(Mage::helper("adminhtml")->getUrl("connector/adminhtml_support/landing/"))->sendResponse();
 		    	exit;
 		} elseif($current != ''  AND $adminsession->isLoggedIn() AND $decode != '') { 

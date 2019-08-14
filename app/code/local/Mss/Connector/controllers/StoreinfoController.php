@@ -3,6 +3,7 @@ class Mss_Connector_StoreinfoController extends Mage_Core_Controller_Front_Actio
 
 	const MSS_STORE_EMAIL = 'mss/mss_info_group/store_email';
 	const MSS_STORE_PHONENO = 'mss/mss_info_group/store_phoneno';
+	const XML_DEFAULT_STORE_LANG ='general/locale/code';
 
 	
 	public $storeId = "1";
@@ -90,7 +91,7 @@ class Mss_Connector_StoreinfoController extends Mage_Core_Controller_Front_Actio
 		
 	*/
 
-	public function getstoredataAction() {
+		public function getstoredataAction() {
 		
 		$basicinfo = array ();
 		$website_id = Mage::app()->getStore()->getWebsiteId();
@@ -105,7 +106,8 @@ class Mss_Connector_StoreinfoController extends Mage_Core_Controller_Front_Actio
 						'name' => $view->getName(),
 						'view_id' => $view->getStoreId(),
 						'store_url' => $view->getUrl(),
-						'store_code'=> $view->getCode(),
+						'store_code'=> Mage::getStoreConfig(self::XML_DEFAULT_STORE_LANG, $view->getStoreId()),
+						'store_name'=> $view->getName(),
 						'sort_order' => $view->getSortOrder(),
 						'is_active' => $view->getIsActive()
 				];

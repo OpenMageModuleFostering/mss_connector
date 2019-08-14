@@ -1004,7 +1004,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 								$service->submitAll();
 								$order = $service->getOrder();
 								$order->setMms_order_type('app')->save();
-								 $quote->delete();
+								$order->sendNewOrderEmail();
+								$quote->delete();
 								
 								$cart = Mage::helper ( 'checkout/cart' )->getCart ();
 								if($cart->getQuote ()->getItemsCount ()){
@@ -1131,6 +1132,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				        $service->submitAll();
 				        $order = $service->getOrder();
 				        $order->setMms_order_type('app')->save();
+				        $order->sendNewOrderEmail();
 				     
      					$increment_id = $order->getRealOrderId();	 				
 						$quote = $customer = $service = null;

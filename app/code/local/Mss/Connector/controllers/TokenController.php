@@ -12,6 +12,7 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 	const XML_SETTING_GOOGLE_SECRET_ID = 'mss_social/mss_google_key/client_secret';
 	const XML_SETTING_FACEBOOK_ID = 'mss_social/mss_facebook_key/facebook_id';
 	const XML_SETTING_GOOGLE_SENDER_ID = 'mss_pushnotification/setting_and/googlesenderid';
+	const XML_DEFAULT_STORE_LANG ='general/locale/code';
 
 
 	public function _construct(){
@@ -218,7 +219,10 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 			
 	public function getConfigurationAction(){
 
-			$config_data = array();
+		    $config_data = array();
+			$storeId =Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId();
+		    $local = Mage::getStoreConfig(self::XML_DEFAULT_STORE_LANG, $storeId);
+		    $lang = explode("_",$local);
 			$config_data['wishlist'] = Mage::getStoreConfig(self::XML_SETTING_ACTIVE);
 			$config_data['review_allow_guest'] = Mage::getStoreConfig(self::XML_SETTING_GUEST_REVIEW);
 			$config_data['guestcheckout'] = Mage::getStoreConfig(self::XML_SETTING_GUEST_CHECKOUT);
@@ -232,6 +236,7 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 							    ->getDefaultStoreId();
 			$config_data['default_view_id'] = Mage::app()->getDefaultStoreView()->getId();
 			$config_data['default_store_currency'] = Mage::app()->getStore()->getCurrentCurrencyCode();
+			$config_data['default_lang'] = $lang[0];
 			
 			
 		    if(Mage::helper('core')->isModuleOutputEnabled('Mage_Review'))

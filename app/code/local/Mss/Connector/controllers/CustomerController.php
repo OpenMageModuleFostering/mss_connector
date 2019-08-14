@@ -272,7 +272,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			//if (Mage::getSingleton ( 'customer/session' )->isLoggedIn ()) {
  			if($userid){
 				$customerId = $userid;
-				$data=$this->getRequest()->getPost();
+				$data= Mage::app()->getRequest()->getParams();
 				
 				
 				if (!Zend_Validate::is($data['firstname'], 'NotEmpty')):
@@ -811,8 +811,9 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 	         		
 		            $address->setFirstname($customer_info['firstname']);
 		         	$address->setLastname($customer_info['lastname']);		         	
-		          	$address->setPhoneno($customer_info['telephone']?:'null');
+		          	$address->setTelephone($customer_info['telephone']?:'null');
 		            $address->setCity($customer_info['city']?:'null');
+		            $address->setStreet($customer_info['street']?:'null');
 		            $address->setState($customer_info['region']?:'null');
 		            $address->setCountry($customer_info['country']?:'null');
 		            $address->setPostcode($customer_info['postcode']?:'null');
@@ -820,7 +821,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 				try{
 
-					$address->save();
+					//$address->save();
 				    $customer->save();
 				    echo json_encode(array('status' => 'success','message'=> $this->__('Data Updated successfully')));	
 				}
