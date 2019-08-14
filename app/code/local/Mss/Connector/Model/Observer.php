@@ -5,6 +5,7 @@ class Mss_Connector_Model_Observer
 	//const ACTIVATION_URL = 'http://mastersoftwaretechnologies.com/magentomobilecart/user/mss_verifiy';
 	const ACTIVATION_URL = 'https://www.magentomobileshop.com/user/mss_verifiy';
 	const TRNS_EMAIL = 'trans_email/ident_general/email';
+	const XML_SECURE_KEY_STATUS = 'magentomobileshop/key/status'; 
 
 	public function notificationMessage()
 	{
@@ -39,6 +40,8 @@ class Mss_Connector_Model_Observer
 		    $final_urls =  $str;
 			$mssSwitch = new Mage_Core_Model_Config();
 			$mssSwitch->saveConfig(self::XML_SECURE_KEY, $mssAppData);
+			$mssSwitch->saveConfig(self::XML_SECURE_KEY_STATUS, '1');
+
 	    	$mssData = array();
 	    	$mssData['final_url'] = $final_url;
 	    	$mssData['mms_id'] = base64_encode($mssAppData);
