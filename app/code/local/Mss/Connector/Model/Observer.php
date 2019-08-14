@@ -2,38 +2,91 @@
 class Mss_Connector_Model_Observer
 {
 	const XML_SECURE_KEY = 'magentomobileshop/secure/key';
-	const ACTIVATION_URL = 'https://www.magentomobileshop.com/mobile-connect';
+	//const ACTIVATION_URL = 'http://mastersoftwaretechnologies.com/magentomobilecart/user/mss_verifiy';
+	const ACTIVATION_URL = 'https://www.magentomobileshop.com/user/mss_verifiy';
 	const TRNS_EMAIL = 'trans_email/ident_general/email';
 
 	public function notificationMessage()
 	{
-	  $adminsession = Mage::getSingleton('admin/session', array('name'=>'adminhtml'));
-	 
+	    $adminsession = Mage::getSingleton('admin/session', array('name'=>'adminhtml'));
 	  	if(!Mage::getStoreConfig('web/url/use_store')):
 	  		$mssSwitch = new Mage_Core_Model_Config();
 	  		$mssSwitch->saveConfig('web/url/use_store', 1);
 	  	endif;
-	 
 
+  		
+
+	  	$url =  Mage::helper('core/url')->getCurrentUrl('key');
+     	$url_path = parse_url($url, PHP_URL_PATH);
+		$token = pathinfo($url_path, PATHINFO_BASENAME);
+
+		$decode =  Mage::app()->getRequest()->getParam('mms_id');
+
+		$mssAppData = '';
+
+		if($decode AND !Mage::registry('mms_app_data')) {
+			$param =  base64_decode($decode);
+			Mage::register('mms_app_data', $param);
+			$mssAppData = Mage::registry('mms_app_data');
+	
+		}
+		$current = Mage::getStoreConfig('magentomobileshop/secure/key');
+		if((!$current)  AND $adminsession->isLoggedIn() AND $mssAppData != '' ) { 
+				
+           	$str = self::ACTIVATION_URL;
+			$url = $str.'?mms_id=';
+ 		    $final_url =  $url.''.$mssAppData;
+		    $final_urls =  $str;
+			$mssSwitch = new Mage_Core_Model_Config();
+			$mssSwitch->saveConfig(self::XML_SECURE_KEY, $mssAppData);
+	    	$mssData = array();
+	    	$mssData['final_url'] = $final_url;
+	    	$mssData['mms_id'] = base64_encode($mssAppData);
+			$mssData['default_store_name'] = Mage::app()->getDefaultStoreView()->getCode();
+			$mssData['default_store_id'] = Mage::app()->getWebsite(true)->getDefaultGroup()
+							   				 ->getDefaultStoreId();
+			$mssData['default_view_id'] = Mage::app()->getDefaultStoreView()->getId();
+			$mssData['default_store_currency'] = Mage::app()->getStore()->getCurrentCurrencyCode();
+			$mssData['status'] = 'true';
+
+			Mage::app()->getCacheInstance()->cleanType('config');
+			Mage::unregister('mms_app_data');
+
+			$fields_string='';
+			foreach($mssData as $key=>$value) { $fields_string .= $key.'='.$value.'&'; }
+			rtrim($fields_string,'&');
+
+			$ch = curl_init();
+			curl_setopt($ch,CURLOPT_URL,$final_urls);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
+			curl_setopt($ch,CURLOPT_POST,count($mssData));
+			curl_setopt($ch,CURLOPT_POSTFIELDS,$fields_string);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+
+			$result = curl_exec($ch); 
+			curl_close($ch);
+			Mage::app()->getResponse()->setRedirect(Mage::helper("adminhtml")->getUrl("connector/adminhtml_support/landing/"))->sendResponse();
+		    	exit;
+		} elseif($current != ''  AND $adminsession->isLoggedIn() AND $decode != '') { 
+			//Mage::getSingleton('core/session')->addSuccess('Your extension is activated.');
+			Mage::app()->getResponse()->setRedirect(Mage::helper("adminhtml")->getUrl("connector/adminhtml_support/landing/", array('_query'=>'test=1')))->sendResponse();
+		    	exit;
+
+		}
 		if(!Mage::getStoreConfig(self::XML_SECURE_KEY) AND $adminsession->isLoggedIn()):
-
-        	$href = self::ACTIVATION_URL.'?email='.Mage::getStoreConfig(self::TRNS_EMAIL).'&url='.Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB);
-        	
-        	Mage::getSingleton('core/session')->addError('Magentomobileshop extension is not activated yet, <a href="'.$href.'" target="_blank">Click here</a> to activate your extension.');
-             	
+			$static_url  = 'https://www.magentomobileshop.com/user/mobile-connect?key_info=';
+			$email =      base64_encode(Mage::getStoreConfig(self::TRNS_EMAIL));
+			$url =  base64_encode(Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB));
+			$key = base64_encode('email='.$email.'&url='.$url);
+    	    $href = $static_url.$key;
+    	
+    	Mage::getSingleton('core/session')->addError('Magentomobileshop extension is not activated yet, <a href="'.$href.'" target="_blank">Click here</a> to activate your extension.');
         endif;
-
-        $configValue = Mage::getStoreConfig('mss/connector/email');
-        
-		/*if($configValue =='' AND $adminsession->isLoggedIn())
-			$this->sendemail();*/
-
-
-     	
+    	
 	}
 
+	
 	public function sendemail(){
-		
 		
 			$current_store_url = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB);;
 		    $current_store_name = Mage::getStoreConfig('general/store_information/name');
@@ -50,25 +103,22 @@ class Mss_Connector_Model_Observer
 				Thank you,
 				MagentoMobileshop Dev Tem
 MESSAGE;
-		  
-
 			$to = "contact@magentomobileshop.com";
-			
 			$subject = "New Connector Installation ";		
 			$headers = "MIME-Version: 1.0" . "\r\n";
 			$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";		
 			$headers .= 'From: <contact@magentomobileshop.com>' . "\r\n";
 			$headers .= 'Cc: mss.yogendra@gmail.com' . "\r\n";
 			$email = mail($to,$subject,$message,$headers);
-		  
 			if($email):
 				$mssSwitch = new Mage_Core_Model_Config();
 				$mssSwitch->saveConfig('mss/connector/email', 1);										    
 			endif;
-			
-
 			return true;
 		
      }
 
+
 }
+
+
