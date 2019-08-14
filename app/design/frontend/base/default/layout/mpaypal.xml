@@ -1,0 +1,13 @@
+<?xml version="1.0"?>   
+<layout version="0.1.0">   
+  <mpaypal_index_mpaypal>   
+  	<action method="setCacheLifetime" />
+    <reference name="root">   
+      <action method="setTemplate"><template>page/1column.phtml</template></action>   
+    </reference>
+    <reference name="content">   
+      <block type="mpaypal/index" name="mpaypal_index" template="mpaypal/index.phtml"/>   
+    </reference>   
+  </mpaypal_index_mpaypal>   
+</layout>   
+	

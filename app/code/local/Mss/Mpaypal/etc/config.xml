@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<config>
+  <modules>
+    <Mss_Mpaypal>
+      <version>0.1.0</version>
+    </Mss_Mpaypal>
+  </modules>
+  <frontend>
+    <routers>
+      <mpaypal>
+        <use>standard</use>
+          <args>
+            <module>Mss_Mpaypal</module>
+            <frontName>mpaypal</frontName>
+          </args>
+      </mpaypal>
+    </routers>
+		<layout>
+		  <updates>
+  			<mpaypal>
+  			  <file>mpaypal.xml</file>
+  			</mpaypal>
+		  </updates>
+		</layout>
+
+    <events>
+        <payment_method_is_active>
+            <observers>
+                <mpaypal_payment_method_is_active>
+                    <type>singleton</type>
+                    <class>mpaypal/observer</class>
+                    <method>paymentMethodIsActive</method>
+                </mpaypal_payment_method_is_active>
+            </observers>
+        </payment_method_is_active>
+    </events>
+
+  </frontend>
+  <global>
+  	<models>
+		<mpaypal>
+			<class>Mss_Mpaypal_Model</class>
+		</mpaypal>
+	</models>
+    <helpers>
+      <mpaypal>
+        <class>Mss_Mpaypal_Helper</class>
+      </mpaypal>
+    </helpers>
+  	<blocks>
+  	  <mpaypal>
+  		  <class>Mss_Mpaypal_Block</class>
+  	  </mpaypal>
+  	</blocks>
+  </global>
+
+  <default>
+	<payment>
+		<mpaypal>
+			
+			<active>1</active>
+			<order_status>pending</order_status>
+			<title>Paypal (app)</title>
+			
+		  <model>mpaypal/mpaypal</model>
+			
+	  </mpaypal>
+	</payment>
+  </default>
+</config> 

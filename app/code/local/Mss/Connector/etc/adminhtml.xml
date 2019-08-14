@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+	<config>
+		<acl>
+			<resources>
+				<admin>
+					<children>
+						<system>
+							<children>
+								<config>
+									<children>
+										<mss translate="title" module="connector">
+											<title>Magentomobileshop Connector</title>
+											<sort_order>1000</sort_order>
+										</mss>
+										<magentomobileshop_payment translate="title" module="connector">
+											<title>Magentomobileshop Payment</title>
+											<sort_order>1001</sort_order>
+										</magentomobileshop_payment>
+									</children>
+								</config>
+							</children>
+						</system>
+					</children>
+				</admin>
+			</resources>
+		</acl>
+		<menu>
+	        <connector module="connector" translate="title">
+	            <title> MagentoMobileShop</title>
+	            <sort_order>100</sort_order>               
+	            <children>
+	               
+	                <configuration module="connector" translate="title">
+	                    <title>Configuration</title>
+	                    <sort_order>1</sort_order>
+	                    <action>adminhtml/system_config/edit/section/mss/</action>
+	                </configuration>
+	               
+	          
+	            </children>
+	        </connector>
+    	</menu>
+	</config>

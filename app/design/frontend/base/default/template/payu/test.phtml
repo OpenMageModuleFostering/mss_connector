@@ -1,0 +1,10 @@
+<SCRIPT LANGUAGE="JavaScript">
+function fnSubmit() {
+   window.document.payuForm.submit();
+   return;
+}
+</SCRIPT>
+<body LANGUAGE="javascript" onload="return fnSubmit()" style="display: none;">
+<form action="<?php echo $this->getUrl('payu/index/success') ?>" method="post" name="payuForm">
+</form>
+</body>

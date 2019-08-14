@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<layout>
+    <default>
+        <reference name="notifications">
+            <block type="connector/adminhtml_notifications" name="connector_notifications" template="connector/notification.phtml"/>
+        </reference>
+    </default>
+</layout>

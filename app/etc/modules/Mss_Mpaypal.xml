@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<config>
+	<modules>
+		<Mss_Mpaypal>
+			<active>true</active>
+			<codePool>local</codePool>
+			
+			<depends>
+		       <Mage_Payment />
+		    </depends>
+		</Mss_Mpaypal>
+	</modules>
+</config>

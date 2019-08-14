@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<config>
+    <menu>
+        <connector>        
+            <children>
+                <banner module="bannerslider" translate="title">
+                    <title>Manage Banners</title>
+                    <sort_order>2</sort_order>
+                    <action>admin_bannerslider/adminhtml_bannerslider</action>
+                </banner>
+            </children>
+    </connector>
+    </menu>    
+</config>

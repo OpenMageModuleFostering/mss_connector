@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+  <pushnotification_adminhtml_pushnotificationbackend_index>
+	<reference name="content">
+	  <block type="pushnotification/adminhtml_pushnotificationbackend" name="pushnotificationbackend" template="pushnotification/pushnotificationbackend.phtml"/>
+	</reference>
+  </pushnotification_adminhtml_pushnotificationbackend_index>
+</layout>

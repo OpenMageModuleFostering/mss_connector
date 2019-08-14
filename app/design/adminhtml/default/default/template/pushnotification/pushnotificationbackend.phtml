@@ -1,0 +1,58 @@
+ <div class="container" align="center" >
+	<div class="row" style="background-color:#DCDCDC; width:50%" >
+		<h1>PUSH NOTIFICATION</h1>
+		<form id='notification-form' role="form">
+			 <div class="form-group">
+				    <label class="type" id="label"><h4>Notification Type :</h4></label>
+				  		<select id="notification_type">
+							<option value="0">Send Notification to Both IOS/Android</option>
+							<option value="1">Send Notification to Android Only</option>
+							<option value="2">Send Notification to IOS only</option>
+						</select>
+
+			  </div>
+			  <div class="form-group" style="margin-top:23px;">
+				    <div><label id="label"><h4>Pushnotification Message:</h4></label></div>
+				  		<div><textarea rows="10" cols="50" id="message"></textarea></div>
+
+			  </div>
+		  	  <div style="margin-top:23px; padding:18px;">
+		 		 <button style="width:140px;height:35px" type="button" id="butt" class="btn btn-default" onclick="pushnotification()">Send Notification</button>
+			  </div>
+			 <div id="information">
+			 </div>
+		</form>
+	</div>
+</div>
+<script>
+function pushnotification()
+{
+	
+	var url='<?php echo Mage::helper("adminhtml")->getUrl("admin_pushnotification/adminhtml_pushnotificationbackend/notificationsend");?>';
+	var message  = document.getElementById("message").value;
+	if(!message){
+		alert('Pushnotification Message field is required.');
+		return;
+	}
+	 
+	new Ajax.Request(url, {
+	  method:'get',
+	  parameters: {'message':message,'notification_type':document.getElementById("notification_type").options[document.getElementById("notification_type").selectedIndex].value},
+	  onSuccess: function(transport) {
+	    var response = transport.responseText;
+	    	document.getElementById("information").innerHTML = response;
+	  },
+	  onFailure: function() { 
+			document.getElementById("information").innerHTML =  'There is error in sending notification.';
+		
+		}
+	});
+}
+
+
+</script>
+<style>
+.type {
+    margin-left: -51px;
+}
+</style>

@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <tabs>
+        <connector translate="label" module="connector">
+              <label><![CDATA[<div style="position: fix;"><img id="magentomobileshop_block" src="" alt="" border="0" /></div>&nbsp;<script>$('magentomobileshop_block').src = "http://magentomobileshop.com/wp-content/magentomobiledata/logo.png";</script>]]></label>
+            <sort_order>1</sort_order>
+           
+        </connector>
+    </tabs>
+   <sections>
+        <mss translate="label" module="connector">
+            <label>General</label>
+            <tab>connector</tab>
+            <sort_order>1</sort_order>
+            <show_in_default>1</show_in_default>
+            <show_in_website>1</show_in_website>
+            <show_in_store>1</show_in_store>
+            <groups>
+                    <my_aboutus translate="label" module="connector">
+                        <label>About Magento Mobile</label>
+                        <frontend_type>text</frontend_type>
+                        <sort_order>0</sort_order>
+                        <show_in_default>1</show_in_default>
+                        <show_in_website>1</show_in_website>
+                        <show_in_store>1</show_in_store>
+                        <fields>
+                           <about>
+
+                                <frontend_model>connector/system_config_about</frontend_model>
+                                <sort_order>0</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                          </about> 
+                        </fields>                        
+                    </my_aboutus>
+                    <mss_info_group translate="label" module="connector">
+                        <label>Contact Information</label>
+                        <frontend_type>text</frontend_type>
+                        <sort_order>3</sort_order>
+                        <show_in_default>1</show_in_default>
+                        <show_in_website>1</show_in_website>
+                        <show_in_store>1</show_in_store>
+                        <fields>
+                            <store_email translate="label">
+                                <label>Contact email address </label>
+                                <frontend_type>text</frontend_type>
+                                <sort_order>2</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                               
+                            </store_email>
+                            <store_phoneno translate="label">
+                                <label>Phone number: </label>
+                                <frontend_type>text</frontend_type>
+                                <sort_order>1</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                
+                            </store_phoneno>
+                           <!--  <store_weburl translate="label">
+                                <label>Store Website URL: </label>
+                                <frontend_type>text</frontend_type>
+                                <sort_order>3</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                
+                            </store_weburl> -->
+                        </fields>
+                </mss_info_group>
+                <mss_config_group translate="label" module="connector">
+                    <label>CMS Pages</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>4</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                    
+                        <about_us_page translate="label">
+                            <label>About Us</label>
+                           <frontend_type>select</frontend_type>
+                            <sort_order>2</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <source_model>adminhtml/system_config_source_cms_page</source_model>
+                        </about_us_page>
+                        <term_condition_page translate="label">
+                            <label>Term And Condition </label>
+                           <frontend_type>select</frontend_type>
+                            <sort_order>3</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <source_model>adminhtml/system_config_source_cms_page</source_model>
+                        </term_condition_page>
+                         <privacy_policy_page translate="label">
+                            <label>Privacy Policy </label>
+                           <frontend_type>select</frontend_type>
+                            <sort_order>4</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <source_model>adminhtml/system_config_source_cms_page</source_model>
+                        </privacy_policy_page>
+                         <return_privacy_policy_page translate="label">
+                            <label>Return Policy </label>
+                           <frontend_type>select</frontend_type>
+                            <sort_order>5</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <source_model>adminhtml/system_config_source_cms_page</source_model>
+                        </return_privacy_policy_page>
+                    </fields>
+                </mss_config_group>
+
+
+
+            </groups>
+            
+        </mss>
+        <magentomobileshop_payment translate="label" module="connector">
+            <label>Payment Methods</label>
+            <tab>connector</tab>
+            <sort_order>1</sort_order>
+            <show_in_default>1</show_in_default>
+            <show_in_website>1</show_in_website>
+            <show_in_store>1</show_in_store>
+            <groups>
+                    <about_us translate="label" module="connector">
+                        <label>About Us</label>
+                        <frontend_type>text</frontend_type>
+                        <sort_order>1</sort_order>
+                        <show_in_default>1</show_in_default>
+                        <show_in_website>1</show_in_website>
+                        <show_in_store>1</show_in_store>
+                        <fields>
+                           <about>
+
+                                <frontend_model>connector/system_config_about</frontend_model>
+                                <sort_order>0</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                          </about> 
+                        </fields>   
+                    </about_us>
+            </groups>
+            <!-- <groups>
+                    <ccsave translate="label" module="connector">
+                        <label>Saved CC</label>
+                        <frontend_type>text</frontend_type>
+                        <sort_order>2</sort_order>
+                        <show_in_default>1</show_in_default>
+                        <show_in_website>1</show_in_website>
+                        <show_in_store>1</show_in_store>
+                        <fields>
+                           <ccsave_status>
+
+                                <label>Enable/Disable</label>
+                                <frontend_type>select</frontend_type>
+                                <source_model>adminhtml/system_config_source_enabledisable</source_model>
+                                <sort_order>1</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment>(Enable/Disable payment method for App Only.)</comment>
+                          </ccsave_status> 
+                        </fields>   
+                    </ccsave>
+            </groups> -->
+            <groups>
+                    <banktransfer translate="label" module="connector">
+                        <label>Bank Transfer Payment</label>
+                        <frontend_type>text</frontend_type>
+                        <sort_order>3</sort_order>
+                        <show_in_default>1</show_in_default>
+                        <show_in_website>1</show_in_website>
+                        <show_in_store>1</show_in_store>
+                        <fields>
+                            <banktransfer_message>
+
+                                <frontend_model>connector/system_config_banktransfer</frontend_model>
+                                <sort_order>0</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                          </banktransfer_message>
+                           <banktransfer_status>
+
+                                <label>Enable/Disable</label>
+                                <frontend_type>select</frontend_type>
+                                <source_model>adminhtml/system_config_source_enabledisable</source_model>
+                                <sort_order>1</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment>(Enable/Disable payment method for App Only.)</comment>
+                          </banktransfer_status> 
+                        </fields>   
+                    </banktransfer>
+            </groups>
+            <groups>
+                    <checkmo translate="label" module="connector">
+                        <label>Check / Money Order</label>
+                        <frontend_type>text</frontend_type>
+                        <sort_order>4</sort_order>
+                        <show_in_default>1</show_in_default>
+                        <show_in_website>1</show_in_website>
+                        <show_in_store>1</show_in_store>
+                        <fields>
+                            <checkmo_message>
+
+                                <frontend_model>connector/system_config_checkmo</frontend_model>
+                                <sort_order>0</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                          </checkmo_message>
+                           <checkmo_status>
+
+                                <label>Enable/Disable</label>
+                                <frontend_type>select</frontend_type>
+                                <source_model>adminhtml/system_config_source_enabledisable</source_model>
+                                <sort_order>1</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment>(Enable/Disable payment method for App Only.)</comment>
+                          </checkmo_status> 
+                        </fields>   
+                    </checkmo>
+            </groups>
+            <groups>
+                    <authorizenet translate="label" module="connector">
+                        <label>Authorize.net</label>
+                        <frontend_type>text</frontend_type>
+                        <sort_order>5</sort_order>
+                        <show_in_default>1</show_in_default>
+                        <show_in_website>1</show_in_website>
+                        <show_in_store>1</show_in_store>
+                        <fields>
+                            <authorizenet_message>
+
+                                <frontend_model>connector/system_config_authorizenet</frontend_model>
+                                <sort_order>0</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                          </authorizenet_message>
+                           <authorizenet_status>
+
+                                <label>Enable/Disable</label>
+                                <frontend_type>select</frontend_type>
+                                <source_model>adminhtml/system_config_source_enabledisable</source_model>
+                                <sort_order>1</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment>(Enable/Disable payment method for App Only.)</comment>
+                          </authorizenet_status> 
+                        </fields>   
+                    </authorizenet>
+            </groups>
+            <groups>
+                    <cashondelivery translate="label" module="connector">
+                        <label>Cash On Delivery Payment</label>
+                        <frontend_type>text</frontend_type>
+                        <sort_order>6</sort_order>
+                        <show_in_default>1</show_in_default>
+                        <show_in_website>1</show_in_website>
+                        <show_in_store>1</show_in_store>
+                        <fields>
+                            <cashondelivery_message>
+
+                                <frontend_model>connector/system_config_cod</frontend_model>
+                                <sort_order>0</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                          </cashondelivery_message>
+                           <cashondelivery_status>
+
+                                <label>Enable/Disable</label>
+                                <frontend_type>select</frontend_type>
+                                <source_model>adminhtml/system_config_source_enabledisable</source_model>
+                                <sort_order>1</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment>(Enable/Disable payment method for App Only.)</comment>
+                          </cashondelivery_status> 
+                        </fields>   
+                    </cashondelivery>
+            </groups>
+            <groups>
+                    <payucheckout_shared translate="label" module="connector">
+                        <label>Payu</label>
+                        <frontend_type>text</frontend_type>
+                        <sort_order>7</sort_order>
+                        <show_in_default>1</show_in_default>
+                        <show_in_website>1</show_in_website>
+                        <show_in_store>1</show_in_store>
+                        <fields>
+                          <payu_message>
+
+                                <frontend_model>connector/system_config_payu</frontend_model>
+                                <sort_order>0</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                          </payu_message>
+                           <payucheckout_shared_status>
+
+                                <label>Enable/Disable</label>
+                                <frontend_type>select</frontend_type>
+                                <source_model>adminhtml/system_config_source_enabledisable</source_model>
+                                <sort_order>1</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment>(Enable/Disable payment method for App Only.)</comment>
+                          </payucheckout_shared_status> 
+                          <!-- <payu_title>
+
+                                <label>Title</label>
+                                <frontend_type>text</frontend_type>
+                                <sort_order>2</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment> This is what the customers will see as the name of the payment option</comment>
+                           </payu_title> -->
+                           <payu_key>
+
+                                <label>Merchant Id</label>
+                                <frontend_type>text</frontend_type>
+                                <sort_order>3</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment>Enter the merchant key provided by PayUMoney here.</comment>
+                           </payu_key>
+                           <payu_salt>
+                                <label>Salt</label>
+                                <frontend_type>text</frontend_type>
+                                <sort_order>4</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment>Enter the salt provided by PayUMoney here.</comment>
+                           </payu_salt>
+                           <payu_mode>
+                                <label>Transaction Mode Production</label>
+                                <frontend_type>select</frontend_type>
+                                <source_model>adminhtml/system_config_source_enabledisable</source_model>
+                                <sort_order>5</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                             
+                           </payu_mode>
+                        </fields>   
+                    </payucheckout_shared>
+            </groups>
+            <groups>
+                    <mpaypal translate="label" module="connector">
+                        <label>PayPal (app)</label>
+                        <frontend_type>text</frontend_type>
+                        <sort_order>8</sort_order>
+                        <show_in_default>1</show_in_default>
+                        <show_in_website>1</show_in_website>
+                        <show_in_store>1</show_in_store>
+                        <fields>
+                            <mpaypal_message>
+
+                                <frontend_model>connector/system_config_mpaypal</frontend_model>
+                                <sort_order>0</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                            </mpaypal_message>
+                           <mpaypal_status>
+
+                                <label>Enable/Disable</label>
+                                <frontend_type>select</frontend_type>
+                                <source_model>adminhtml/system_config_source_enabledisable</source_model>
+                                <sort_order>1</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment>(Enable/Disable payment method for App Only.)</comment>
+                          </mpaypal_status> 
+                          
+                           <mpaypal_email>
+
+                                <label>Merchant Email</label>
+                                <frontend_type>text</frontend_type>
+                                <sort_order>3</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                                <comment>Merchant Email Id.</comment>
+                           </mpaypal_email>
+                           
+                           <mpaypal_mode>
+                                <label>Transaction Mode Production</label>
+                                <frontend_type>select</frontend_type>
+                                <source_model>adminhtml/system_config_source_enabledisable</source_model>
+                                <sort_order>5</sort_order>
+                                <show_in_default>1</show_in_default>
+                                <show_in_website>1</show_in_website>
+                                <show_in_store>1</show_in_store>
+                             
+                           </mpaypal_mode>
+                        </fields>   
+                    </mpaypal>
+            </groups>
+        </magentomobileshop_payment>
+    </sections>
+    
+</config>

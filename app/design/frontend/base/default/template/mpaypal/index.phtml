@@ -1,0 +1,117 @@
+<html>
+<head>
+<SCRIPT LANGUAGE="JavaScript">
+function fnSubmit() {
+
+  window.document.paypalForm.submit();
+   return;
+}
+</SCRIPT>
+<style>
+#loader::after {
+    bottom: 0;
+    content: "Please Wait...";
+    height: 40px;
+    left: 0px;
+    position: absolute;
+    right: 0;
+    text-align: center;
+    top: 58%;
+}
+#loader {
+    height: 100%;
+    position: fixed;
+    text-align: center;
+    width: 100%;
+}
+#loader img {
+    position: absolute;
+    text-align: center;
+    top: 50%;
+}
+#loader img {
+    left: 50%;
+    position: absolute;
+    text-align: center;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+</style>
+</head>
+
+
+<body LANGUAGE="javascript" onload="return fnSubmit()" >
+
+<div id="loader">
+  <img src="<?php echo $this->getSkinUrl('images/magentomobileshop/magentomobileshop_loader.gif') ?>"/>
+</div>
+<?php
+
+$order_id = Mage::app()->getRequest()->getParam('orderid');
+
+if(isset($order_id)):
+
+      $order = Mage::getModel('sales/order')->loadByIncrementId($order_id);
+      if (!$order->getId()):
+        echo "<script type='text/javascript'>location.href ='".
+          Mage::getBaseUrl()."mpaypal/index/failure'</script>";
+       
+        exit;
+      endif;
+
+
+      $MERCHANT_EMAIL = Mage::getStoreConfig('magentomobileshop_payment/mpaypal/mpaypal_email');
+     
+
+      if(!$MERCHANT_EMAIL):
+          echo "<script type='text/javascript'>location.href ='".
+          Mage::getBaseUrl()."mpaypal/index/failure'</script>";
+          exit;
+      endif;
+
+      if(Mage::getStoreConfig('magentomobileshop_payment/mpaypal/mpaypal_mode')):
+        $PAYPAL_BASE_URL = "https://www.paypal.com/cgi-bin/webscr";
+      else:
+        $PAYPAL_BASE_URL = "https://www.sandbox.paypal.com/cgi-bin/webscr";
+      endif;
+
+
+?>
+
+
+<div id="container" style="display: none;" >
+<h2>Mpaypal Form</h2>
+
+<form name="paypalForm" action="<?php echo $PAYPAL_BASE_URL; ?>" method='post'>
+    <input type="hidden" name="business" value="<?php echo $MERCHANT_EMAIL?>" />
+    <input type="hidden" name="notify_url" value="<?php echo Mage::getBaseUrl()?>mpaypal/index/ipn" />
+    <input type="hidden" name="cancel_return" value="<?php echo Mage::getBaseUrl()?>mpaypal/index/failure" />
+    <input type="hidden" name="return" value="<?php echo Mage::getBaseUrl()?>mpaypal/index/success" /> 
+    <input type="hidden" name="return_url" value="<?php echo Mage::getBaseUrl()?>mpaypal/index/success" />
+    <input type="hidden" name="rm" value="2" />
+
+    <input type="hidden" name="lc" value="" />
+    <input type="hidden" name="no_shipping" value="1" />
+    <input type="hidden" name="no_note" value="1" />
+
+    <input type="hidden" name="currency_code" value="<?php echo $order->getOrderCurrencyCode()?>" />
+    <input type="hidden" name="page_style" value="paypal" />
+    <input type="hidden" name="charset" value="utf-8" />
+    <input type="hidden" name="item_name" value="<?php echo $order->getIncrementId() ?>" />  
+   
+    <input type="hidden" value="_xclick" name="cmd"/>
+    <input type="hidden" name="amount" value="<?php echo sprintf('%0.2f',$order->getGrandTotal())?>" />
+    <input type='submit' name='pay_now' id='pay_now' value='Pay' />
+</form>
+
+
+</div>
+</body>
+</html>
+<?php
+else:
+   echo "<script type='text/javascript'>location.href ='".
+          Mage::getBaseUrl()."mpaypal/index/failure'</script>";
+   exit;
+endif;
+?>

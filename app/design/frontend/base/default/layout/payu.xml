@@ -1,0 +1,13 @@
+<?xml version="1.0"?>   
+<layout version="0.1.0">   
+  <payu_index_index>  
+  <action method="setCacheLifetime" /> 
+    <reference name="root">   
+      <action method="setTemplate"><template>page/1column.phtml</template></action>   
+    </reference>
+    <reference name="content">   
+      <block type="payu/index" name="payu_index" template="payu/index.phtml"/>   
+    </reference>   
+  </payu_index_index>   
+</layout>   
+	

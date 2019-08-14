@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<config>
+  <modules>
+    <Mss_Sociallogin>
+      <version>0.1.0</version>
+    </Mss_Sociallogin>
+  </modules>
+  <global>
+
+      <helpers>
+        <sociallogin>
+          <class>Mss_Sociallogin_Helper</class>
+        </sociallogin>
+      </helpers>
+
+      <models>
+        <sociallogin>
+          <class>Mss_Sociallogin_Model</class>
+          <resourceModel>sociallogin_mysql4</resourceModel>
+        </sociallogin>
+      </models>
+
+      <resources>
+        <sociallogin_setup>
+          <setup>
+            <module>Mss_Sociallogin</module>
+            <class>Mage_Customer_Model_Entity_Setup</class>
+          </setup>
+          <connection>
+            <use>core_setup</use>
+          </connection>
+        </sociallogin_setup>
+        <sociallogin_write>
+          <connection>
+            <use>core_write</use>
+          </connection>
+        </sociallogin_write>
+        <sociallogin_read>
+          <connection>
+            <use>core_read</use>
+          </connection>
+        </sociallogin_read>
+      </resources>
+
+    </global>
+
+</config>

@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<config>
+  <modules>
+    <Mss_Pushnotification>
+      <version>0.1.6</version>
+    </Mss_Pushnotification>
+  </modules>
+  <adminhtml>
+        <acl>
+            <resources>
+                <admin>
+                    <children>
+                        <system>
+                            <children>
+                                <config>
+                                    <children>
+                                        <mss_pushnotification>
+                                            <title>MSS Extensions</title>
+                                        </mss_pushnotification>
+                                        
+                                    </children>
+                                </config>
+                            </children>
+                        </system>
+                    </children>
+                </admin>
+            </resources>
+        </acl>
+    </adminhtml> 
+  <global>
+    <helpers>
+      <pushnotification>
+        <class>Mss_Pushnotification_Helper</class>
+      </pushnotification>
+    </helpers>
+    <blocks>
+      <pushnotification>
+        <class>Mss_Pushnotification_Block</class>
+      </pushnotification>
+    </blocks>
+    <models>
+      <pushnotification>
+        <class>Mss_Pushnotification_Model</class>
+        <resourceModel>pushnotification_mysql4</resourceModel>
+      </pushnotification>
+         <pushnotification_mysql4>
+            <class>Mss_Pushnotification_Model_Mysql4</class>
+            <entities>
+                <pushnotification>
+                    <table>notification</table>
+                </pushnotification>
+            </entities>
+        </pushnotification_mysql4>
+    </models>
+
+    <resources>
+                <pushnotification_setup>
+                    <setup>
+                        <module>Mss_Pushnotification</module>
+                        <class>Mage_Customer_Model_Entity_Setup</class>
+                    </setup>
+                    <connection>
+                        <use>core_setup</use>
+                    </connection>
+                </pushnotification_setup>
+                <pushnotification_write>
+                    <connection>
+                        <use>core_write</use>
+                    </connection>
+                </pushnotification_write>
+                <pushnotification_read>
+                    <connection>
+                        <use>core_read</use>
+                    </connection>
+                </pushnotification_read>
+            </resources>
+
+  </global>
+   
+
+  <admin>
+    <routers>
+      <pushnotification>
+        <use>admin</use>
+        <args>
+          <module>Mss_Pushnotification</module>
+          <frontName>admin_pushnotification</frontName>
+        </args>
+      </pushnotification>
+    </routers>
+  </admin>
+  <adminhtml>
+    <menu>
+      <connector>
+        <children>
+          <pushnotificationbackend module="pushnotification">
+            <title>Push Notification</title>
+            <sort_order>2</sort_order>
+            <action>admin_pushnotification/adminhtml_pushnotificationbackend</action>
+          </pushnotificationbackend>
+        </children>
+      </connector>
+    </menu>
+    <acl>
+      <resources>
+        <all>
+          <title>Allow Everything</title>
+        </all>
+       <!--  <admin>
+          <children>
+            <pushnotification translate="title" module="pushnotification">
+              <title>Pushnotification</title>
+              <sort_order>1000</sort_order>
+              <children>
+                <pushnotificationbackend translate="title">
+                  <title>pushnotification</title>
+                </pushnotificationbackend>
+              </children>
+            </pushnotification>
+          </children>
+        </admin> -->
+      </resources>
+    </acl>
+    <layout>
+      <updates>
+        <pushnotification>
+          <file>pushnotification.xml</file>
+        </pushnotification>
+      </updates>
+    </layout>
+    
+  </adminhtml>
+</config> 

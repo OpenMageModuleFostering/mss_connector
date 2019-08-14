@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+  <config>
+     <modules>
+        <Mss_Connector>
+          <version>1.4.5</version>
+        </Mss_Connector>
+     </modules>
+     <frontend>
+	
+       <routers>
+          <connector>
+              <use>standard</use>
+              <args>
+                 <module>Mss_Connector</module>
+                 <frontName>restapi</frontName>
+              </args>
+           </connector>
+       </routers>
+    </frontend>
+   <global>
+     <models>
+      <connector>
+        <class>Mss_Connector_Model</class>
+        <resourceModel>connector_mysql4</resourceModel>
+      </connector>
+      <connector_mysql4>
+        <class>Mss_Connector_Model_Mysql4</class>       
+        <entities>
+            <connector>
+              <table>magentomobilecc</table>
+            </connector>
+        </entities>
+      </connector_mysql4>
+  </models>
+  <resources>
+      <connector_setup>
+          <setup>
+            <module>Mss_Connector</module>
+
+          </setup>
+          <connection>
+            <use>core_setup</use>
+          </connection>
+      </connector_setup>
+      <connector_write>
+          <connection>
+            <use>core_write</use>
+          </connection>
+      </connector_write>
+      <connector_read>
+          <connection>
+            <use>core_read</use>
+          </connection>
+      </connector_read>
+  </resources>
+
+	<helpers>
+      <connector>
+        <class>Mss_Connector_Helper</class>
+      </connector>
+    </helpers>
+    <blocks>
+      <connector>
+        <class>Mss_Connector_Block</class>
+      </connector>
+    </blocks>
+    
+   </global>
+
+    <adminhtml>
+
+       <events>
+            <controller_action_predispatch>
+                <observers>
+                    <activation_notification>
+                        <type>singleton</type>
+                        <class>Mss_Connector_Model_Observer</class>
+                        <method>notificationMessage</method>
+                    </activation_notification>
+                </observers>
+            </controller_action_predispatch>
+        </events>
+
+
+      <layout>
+        <updates>
+          <mss_connector>
+            <file>connector.xml</file>
+          </mss_connector>  
+        </updates>  
+      </layout> 
+    </adminhtml>
+</config>
