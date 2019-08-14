@@ -54,7 +54,8 @@ class Mss_Connector_StoreinfoController extends Mage_Core_Controller_Front_Actio
 				if(Mage::getStoreConfig(self::MSS_STORE_PHONENO)):
 					$result['store_phoneno'] = Mage::getStoreConfig(self::MSS_STORE_PHONENO);
 				else:
-					$result['store_phoneno'] = $store_phone;
+					//$result['store_phoneno'] = $store_phone;
+					$result['store_phoneno'] = str_replace('-', '', $store_phone);
 				endif;
 
 				if(Mage::getStoreConfig(self::MSS_STORE_EMAIL)):
@@ -206,6 +207,7 @@ class Mss_Connector_StoreinfoController extends Mage_Core_Controller_Front_Actio
 
 			$storedetails['store_id'] = $store_Id;
 			$storedetails['view_id'] = $view_Id;
+			$storedetails['store_code'] = Mage::app()->getStore($store_Id)->getCode();
 			$storedata[] = $storedetails;
 		endforeach;
 		echo json_encode($storedata);

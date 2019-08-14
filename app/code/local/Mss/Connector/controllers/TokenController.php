@@ -5,7 +5,6 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 	const XML_SECURE_KEY = 'magentomobileshop/secure/key';
 	const XML_SECURE_TOKEN = 'magentomobileshop/secure/token';
 	const XML_SECURE_TOKEN_EXP = 'secure/token/exp';
-
 	const XML_SETTING_ACTIVE = 'wishlist/general/active';
 	const XML_SETTING_GUEST_REVIEW = 'catalog/review/allow_guest';
 	const XML_SETTING_GUEST_CHECKOUT = 'checkout/options/guest_checkout';
@@ -248,11 +247,81 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 			
 				foreach($results as $rating)					
 					$ratingdata[] = $rating['rating_code'] ;
-			
-			   
 			$config_data['rating_type'] = $ratingdata;
-			echo json_encode($config_data);
+			$couponContainer = new Varien_Object($config_data);
+			Mage::dispatchEvent('check_plugin_configuration', array('coupon_container' => $couponContainer));
+			echo json_encode($couponContainer->getData());
 
+
+	}
+
+	  public function getVersionAction(){  
+	  		$version['version'] =  Mage::getConfig()->getModuleConfig("Mss_Connector")->version;
+	  	
+	  		echo json_encode ($version);
+	}
+
+	 public function getAppDataAction() {  
+	 	
+	 	header('Content-type: application/json; charset=utf-8');
+		header("access-control-allow-origin: *");
+		header('Content-type: application/json');
+		
+	 	$getAppCount = $this->_getAppcount();
+    	$array = array();
+    	$encodeKey = $this->getRequest()->getParam('mms_id');
+    	$secureKey = base64_decode($encodeKey);
+    	$current_date  =date("Y-m-d");
+        $prev_date = date('Y-m-d', strtotime($current_date.' -1 day'));
+
+        try {
+                if(Mage::getStoreConfig(self::XML_SECURE_KEY) == $secureKey) {
+
+             		$total_count =  Mage::getModel('pushnotification/pushnotification')->getCollection()
+              					  ->addFieldToFilter('create_date',$prev_date)->count();
+
+              		$ios_count =  Mage::getModel('pushnotification/pushnotification')->getCollection()
+              					   ->addFieldToFilter('create_date',$prev_date)
+              					   ->addFieldToFilter('device_type','1')
+              					   ->count();		
+              		$android_count =  Mage::getModel('pushnotification/pushnotification')->getCollection()
+              					   ->addFieldToFilter('create_date',$prev_date)
+              					   ->addFieldToFilter('device_type','1')
+              					   ->count();	               			  
+                   	$array['status'] = true;
+                   	$array['date'] = $prev_date;
+                   	$array['app_count']['total_count']  = $total_count;
+                   	$array['app_count']['ios_count'] = $ios_count;
+                   	$array['app_count']['android_count'] = $android_count;
+                   	$array['order'] = $getAppCount;
+                    echo  json_encode($array);
+	            } else {
+	                        $array['status'] = "false";
+	                        $array['message'] = "invalid secure key";
+	                        echo  json_encode($array);
+	            }
+           
+            }
+            catch (Exception $e) {
+                echo  json_encode('false');    
+                 
+            }
+    }  
+
+	protected  function _getAppcount() {
+		
+    	$array = array();
+		$total_count  = Mage::getModel('sales/order')->getCollection()->count();
+
+		$app_count =  Mage::getModel('sales/order')->getCollection()
+		              ->addFieldToFilter('Mms_order_type','app')->count();
+		$web_count = $total_count-$app_count;
+
+		$array['total_count'] = $total_count;
+		$array['app_count'] = $app_count;
+		$array['web_count'] = $web_count;
+
+		 return $array ;
 
 	}
 }

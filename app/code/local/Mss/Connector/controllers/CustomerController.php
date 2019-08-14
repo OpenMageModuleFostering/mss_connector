@@ -138,7 +138,6 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		if( (null==Mage::app ()->getRequest ()->getParam ('password') ) || (null==Mage::app ()->getRequest ()->getParam ('email')) ){
 			echo json_encode ( array (
 					false,
-					'0x1100',
 					$this->__('empty password or email.')
 			) );
 			return ;
@@ -170,18 +169,14 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 					$address->save ();
 					$session->unsGuestAddress ();
 				}
-				
-				echo json_encode ( array (
-						true,
-						'0x0000',
-						array () 
-				) );
+				$array = array();
+				$array['status']= true;
+				$array['message']= 'Your account is activated successfully';
+				echo json_encode ($array);
 			} else {
-				echo json_encode ( array (
-						false,
-						'0x1000',
-						$errors 
-				) );
+				$array['status']= false;
+				$array['message']=  $errors ;
+				echo json_encode ($array);
 			}
 		} catch ( Mage_Core_Exception $e ) {
 			if ($e->getCode () === Mage_Customer_Model_Customer::EXCEPTION_EMAIL_EXISTS) {
@@ -191,13 +186,9 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			} else {
 				$message = $this->__($e->getMessage ());
 			}
-			echo json_encode ( array (
-					false,
-					'0x1000',
-					array (
-							$message
-					) 
-			) );
+			    $array['status']= false;
+				$array['message']=  $message ;
+			    echo json_encode ($array);
 		} catch ( Exception $e ) {
 			echo json_encode ( array (
 					false,

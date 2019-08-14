@@ -74,7 +74,6 @@ class Mss_Connector_Model_Observer
 			//Mage::getSingleton('core/session')->addSuccess('Your extension is activated.');
 			Mage::app()->getResponse()->setRedirect(Mage::helper("adminhtml")->getUrl("connector/adminhtml_support/landing/", array('_query'=>'test=1')))->sendResponse();
 		    	exit;
-
 		}
 		if(!Mage::getStoreConfig(self::XML_SECURE_KEY) AND $adminsession->isLoggedIn()):
 			$static_url  = 'https://www.magentomobileshop.com/user/mobile-connect?key_info=';
