@@ -86,7 +86,7 @@ class Mss_Connector_Helper_Data extends Mage_Core_Helper_Abstract
 
 	    public function loadParent($helper){
 	        	
-			if(Mage::helper('connector')->compareExp() > 24):
+			if(Mage::helper('connector')->compareExp() > 4800):
 				echo	json_encode(array('status'=>'error','code'=>'001'));
 				exit;			
 			endif;
@@ -100,7 +100,7 @@ class Mss_Connector_Helper_Data extends Mage_Core_Helper_Abstract
 				exit;	
 	    	endif;
 
-	    	if(Mage::helper('connector')->compareExp() > 24 || 
+	    	if(Mage::helper('connector')->compareExp() > 4800 || 
 	    		Mage::getStoreConfig('magentomobileshop/secure/token') != isset($helper)
 	    		|| !Mage::getStoreConfig('magentomobileshop/key/status') || !$helper):
 	    				echo	json_encode(array('status'=>'error','code'=>'004'));

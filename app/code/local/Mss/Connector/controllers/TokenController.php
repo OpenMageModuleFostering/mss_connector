@@ -102,7 +102,7 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 					if($params == Mage::getStoreConfig(self::XML_SECURE_KEY)):
 
 						if(Mage::getStoreConfig(self::XML_SECURE_TOKEN_EXP) && 
-							Mage::helper('connector')->compareExp() < 24):
+							Mage::helper('connector')->compareExp() < 4800):
 							
 								echo json_encode(array('status'=>'success','token'=> Mage::getStoreConfig(self::XML_SECURE_TOKEN)));
 								exit;
@@ -311,17 +311,30 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 	protected  function _getAppcount() {
 		
     	$array = array();
-		$total_count  = Mage::getModel('sales/order')->getCollection()->count();
+    	$current_date  =date("Y-m-d");
+        $prev_date = date('Y-m-d', strtotime($current_date.' -1 day'));
+		$total_count  = Mage::getModel('sales/order')->getCollection()
+						 ->addFieldToFilter('created_at', array(
+					    'from'     => strtotime('-1 day', time()),
+					    'to'       => time(),
+					    'datetime' => true
+					))->count();
 
 		$app_count =  Mage::getModel('sales/order')->getCollection()
-		              ->addFieldToFilter('Mms_order_type','app')->count();
+		              ->addFieldToFilter('Mms_order_type','app')
+		             ->addFieldToFilter('created_at', array(
+					    'from'     => strtotime('-1 day', time()),
+					    'to'       => time(),
+					    'datetime' => true
+					))->count();
+
 		$web_count = $total_count-$app_count;
 
 		$array['total_count'] = $total_count;
 		$array['app_count'] = $app_count;
 		$array['web_count'] = $web_count;
 
-		 return $array ;
+		 return  $array ;
 
 	}
 }

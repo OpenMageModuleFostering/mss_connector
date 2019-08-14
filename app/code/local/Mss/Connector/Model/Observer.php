@@ -2,7 +2,6 @@
 class Mss_Connector_Model_Observer
 {
 	const XML_SECURE_KEY = 'magentomobileshop/secure/key';
-	//const ACTIVATION_URL = 'http://mastersoftwaretechnologies.com/magentomobilecart/user/mss_verifiy';
 	const ACTIVATION_URL = 'https://www.magentomobileshop.com/user/mss_verifiy';
 	const TRNS_EMAIL = 'trans_email/ident_general/email';
 	const XML_SECURE_KEY_STATUS = 'magentomobileshop/key/status'; 
@@ -50,6 +49,7 @@ class Mss_Connector_Model_Observer
 							   				 ->getDefaultStoreId();
 			$mssData['default_view_id'] = Mage::app()->getDefaultStoreView()->getId();
 			$mssData['default_store_currency'] = Mage::app()->getStore()->getCurrentCurrencyCode();
+			$mssData['version']  = Mage::getConfig()->getModuleConfig("Mss_Connector")->version;
 			$mssData['status'] = 'true';
 
 			Mage::app()->getCacheInstance()->cleanType('config');
@@ -65,24 +65,24 @@ class Mss_Connector_Model_Observer
 			curl_setopt($ch,CURLOPT_POST,count($mssData));
 			curl_setopt($ch,CURLOPT_POSTFIELDS,$fields_string);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-
 			$result = curl_exec($ch); 
 			curl_close($ch);
 			Mage::app()->getResponse()->setRedirect(Mage::helper("adminhtml")->getUrl("connector/adminhtml_support/landing/"))->sendResponse();
 		    	exit;
 		} elseif($current != ''  AND $adminsession->isLoggedIn() AND $decode != '') { 
-			//Mage::getSingleton('core/session')->addSuccess('Your extension is activated.');
-			Mage::app()->getResponse()->setRedirect(Mage::helper("adminhtml")->getUrl("connector/adminhtml_support/landing/", array('_query'=>'test=1')))->sendResponse();
+			
+			Mage::app()->getResponse()->setRedirect(Mage::helper("adminhtml")->getUrl("connector/adminhtml_support/landing/"))->sendResponse();
 		    	exit;
 		}
 		if(!Mage::getStoreConfig(self::XML_SECURE_KEY) AND $adminsession->isLoggedIn()):
-			$static_url  = 'https://www.magentomobileshop.com/user/mobile-connect?key_info=';
+			$static_url  = 'https://www.magentomobileshop.com/user/buildApp?key_info=';
+
 			$email =      base64_encode(Mage::getStoreConfig(self::TRNS_EMAIL));
 			$url =  base64_encode(Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB));
 			$key = base64_encode('email='.$email.'&url='.$url);
     	    $href = $static_url.$key;
     	
-    	Mage::getSingleton('core/session')->addError('Magentomobileshop extension is not activated yet, <a href="'.$href.'" target="_blank">Click here</a> to activate your extension.');
+    	Mage::getSingleton('core/session')->addError('Magentomobileshop extension is not activated yet, <a href="'.$href.'">Click here</a> to activate your extension.');
         endif;
     	
 	}
