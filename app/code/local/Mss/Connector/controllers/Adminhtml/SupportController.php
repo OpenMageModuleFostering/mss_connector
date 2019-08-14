@@ -200,7 +200,7 @@ class Mss_Connector_Adminhtml_SupportController extends Mage_Adminhtml_Controlle
 
 /*  		$secure_key = Mage::getStoreConfig('magentomobileshop/secure/key');
   	    $decode = base64_encode($secure_key); */
-  		echo "<script src='http://code.jquery.com/jquery-latest.js'></script>  
+  		echo "<script src='//code.jquery.com/jquery-latest.js'></script>  
   		<script type='text/javascript'>
   			jQuery(document).ready(function() {
   				window.location.href = 'https://www.magentomobileshop.com/user/activating-app?app=".$final_data."' ;

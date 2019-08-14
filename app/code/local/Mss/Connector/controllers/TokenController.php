@@ -342,4 +342,61 @@ class Mss_Connector_TokenController extends Mage_Core_Controller_Front_Action {
 		 return  $array ;
 
 	}
+
+	public function changeStatusAction() {  
+	 
+	 	header('Content-type: application/json; charset=utf-8');
+		header("access-control-allow-origin: *");
+		header('Content-type: application/json');
+		
+    	$array = array();
+    	$encodeKey = $this->getRequest()->getParam('mms_id');
+    	$secureKey = base64_decode($encodeKey);
+        try {
+                if(Mage::getStoreConfig(self::XML_SECURE_KEY) == $secureKey) {
+
+
+                	if(Mage::getStoreConfig(self::XML_SECURE_KEY) == $secureKey){
+	                	$mssSwitch = new Mage_Core_Model_Config();
+	            
+
+	          			$model = Mage::getModel('core/config_data')->getCollection()
+	          					 ->addFieldToFilter('path','magentomobileshop/secure/key')->getData();
+						$id =$model[0]['config_id'];
+						$models = Mage::getModel('core/config_data');
+						$models->setId($id)->delete();
+	            
+						$status = Mage::getModel('core/config_data')->getCollection()
+	          					 ->addFieldToFilter('path','magentomobileshop/key/status')->getData();
+
+	          			$ids =$status[0]['config_id'];
+						$models = Mage::getModel('core/config_data');
+						$models->setId($ids)->delete();
+
+	                	$array['status'] = "true";
+		                $array['message'] = "Change app status";
+	                    echo  json_encode($array);
+
+
+
+                   }else{
+                   	    $array['status'] = "false";
+	                    $array['message'] = "App is alleady disabled";
+                        echo  json_encode($array);
+                   }
+             	
+	            } else {
+	                        $array['status'] = "false";
+	                        $array['message'] = "Secure key mismatch";
+	                        echo  json_encode($array);
+	            }
+           
+            }
+            catch (Exception $e) {
+            	$array['status'] = "false";
+	            $array['message'] = "Exception generated";
+                echo  json_encode($array);    
+                 
+            }
+    } 
 }

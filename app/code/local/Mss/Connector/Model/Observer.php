@@ -34,6 +34,8 @@ class Mss_Connector_Model_Observer
 		}
 		$current = Mage::getStoreConfig('magentomobileshop/secure/key');
 		if((!$current)  AND $adminsession->isLoggedIn() AND $mssAppData != '' ) { 
+			
+
 				
            	$str = self::ACTIVATION_URL;
 			$url = $str.'?mms_id=';
@@ -58,7 +60,7 @@ class Mss_Connector_Model_Observer
 
 			Mage::app()->getCacheInstance()->cleanType('config');
 			Mage::getSingleton('core/session')->setAppDatas($mssData[0]);
-			Mage::unregister('mms_app_data');
+			//Mage::unregister('mms_app_data');
 
 /*			$fields_string='';
 			foreach($mssData as $key=>$value) { $fields_string .= $key.'='.$value.'&'; }
@@ -75,6 +77,32 @@ class Mss_Connector_Model_Observer
 			Mage::app()->getResponse()->setRedirect(Mage::helper("adminhtml")->getUrl("connector/adminhtml_support/landing/"))->sendResponse();
 		    	exit;
 		} elseif($current != ''  AND $adminsession->isLoggedIn() AND $decode != '') { 
+
+		
+
+			$str = self::ACTIVATION_URL;
+			$url = $str.'?mms_id=';
+ 		    $final_url =  $url.''.$mssAppData;
+		    $final_urls =  $str;
+			$mssSwitch = new Mage_Core_Model_Config();
+			$mssSwitch->saveConfig(self::XML_SECURE_KEY, $mssAppData);
+			$mssSwitch->saveConfig(self::XML_SECURE_KEY_STATUS, '1');
+			$locale = Mage::app()->getLocale()->getLocaleCode();
+			$lang = explode("_",$locale);
+
+	    	//$mssData[0]['final_url'] = $final_url;
+	    	$mssData[0]['mms_id'] = base64_encode($mssAppData);
+			$mssData[0]['default_store_name'] = Mage::app()->getDefaultStoreView()->getCode();
+			$mssData[0]['default_store_id'] = Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId();
+			$mssData[0]['default_view_id'] = Mage::app()->getDefaultStoreView()->getId();
+			$mssData[0]['default_store_currency'] = Mage::app()->getStore()->getCurrentCurrencyCode();
+			$mssData[0]['language'] = $lang[0];
+			//$mssData[0]['version']  = Mage::getConfig()->getModuleConfig("Mss_Connector")->version;
+			$mssData[0]['status'] = 'true';
+
+			Mage::app()->getCacheInstance()->cleanType('config');
+			Mage::getSingleton('core/session')->setAppDatas($mssData[0]);
+			Mage::unregister('mms_app_data');
 			
 			Mage::app()->getResponse()->setRedirect(Mage::helper("adminhtml")->getUrl("connector/adminhtml_support/landing/"))->sendResponse();
 		    	exit;
