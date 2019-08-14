@@ -34,6 +34,8 @@ class Mss_Connector_StaticpagesController extends Mage_Core_Controller_Front_Act
 	*/
 	public function getPagesAction()
 	{	
+		echo json_encode(array('status'=>'success','data'=>array()));
+		exit;
 		try{
 			$pages = array(
 							
