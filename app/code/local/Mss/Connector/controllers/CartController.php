@@ -866,7 +866,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
     	$shipMethods = array();
 		$country = $this->getRequest()->getParam('country_id');
 
-			if (!Zend_Validate::is($$country, 'NotEmpty')):
+			if (!Zend_Validate::is($country, 'NotEmpty')):
 					echo json_encode(array('status'=>'error','message'=> $this->__('country id should not be empty')));
 						exit;
 				endif;
