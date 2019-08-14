@@ -114,6 +114,27 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
         $avg = 0;
         $ratings = array();
         $rdetails=array();
+
+        $productPrice = $product->getPrice();
+            $block = new Mage_Catalog_Block_Product_Price();
+
+            $product_tier_prices = $block->getTierPrices($product);
+            if(count($product_tier_prices) > 0){
+                $product_tier_prices = (object)$product_tier_prices;
+                $tier_prices = '';
+                foreach ($product_tier_prices as $_index => $_price){
+                   
+                    $product_qty = $_price['price_qty'];
+                    $tier_price = number_format($_price['price'], 2, '.' ,'');
+                    $discount =  ceil(100 - ((100 / $productPrice) * $_price['price']));
+                    $symbol = Mage::helper('connector')->getCurrencysymbolByCode($this->currency);
+                    $tier =  'Buy '.$product_qty .' for '.$symbol.$tier_price .' each and save '. $discount .'%';
+
+                $tier_prices .=  '<span>' .$tier.'</span>';
+                }
+        }
+
+
         $all_custom_option_array = array();
         
         if (count($reviews) > 0):
@@ -289,6 +310,7 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
                         true, null, null, null, null, false),
                         $baseCurrency, $currentCurrency ), 2, '.', '' ),
                     'storeUrl' => $storeUrl,
+                    'tier_price'=> $tier_prices,
                     'description' => $description,
                     'short_description'=>nl2br ($product->getShortDescription()),
                     'symbol' => Mage::helper('connector')->getCurrencysymbolByCode($this->currency),
@@ -402,6 +424,7 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
                     'short_description'=>nl2br ($product->getShortDescription()),
                     'symbol' => Mage::helper('connector')->getCurrencysymbolByCode($this->currency) ,
                     'weight'=>$product->getWeight(),
+                    'tier_price'=> $tier_prices,
                     'qty'=>(int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product->getId())->getQty(),
                     'review'=>$reviews,
                     'rating'=>$rating,
@@ -483,34 +506,30 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 
 
 	public function _getAditional(array $excludeAttr = array()) {
-		$data = array ();
-		$productId = ( int ) $this->getRequest ()->getParam ( 'productid' );
-		$product = Mage::getModel ( "catalog/product" )->load ( $productId );
-		$attributes = $product->getAttributes ();
-		foreach ( $attributes as $attribute ) {
-			if ($attribute->getIsVisibleOnFront () && ! in_array ( $attribute->getAttributeCode (), $excludeAttr )) {
-				$value = $attribute->getFrontend ()->getValue ( $product );
-				
-				if (! $product->hasData ( $attribute->getAttributeCode () )) {
-					$value = Mage::helper ( 'catalog' )->__ ( 'N/A' );
-				} elseif (( string ) $value == '') {
-					$value = Mage::helper ( 'catalog' )->__ ( 'No' );
-				} elseif ($attribute->getFrontendInput () == 'price' && is_string ( $value )) {
-					$value = Mage::app ()->getStore ()->convertPrice ( $value, true );
-				}
-				
-				if (is_string ( $value ) && strlen ( $value )) {
-					$data [] = array (
-							'label' => $attribute->getStoreLabel (),
-							'value' => $value,
-							'code' => $attribute->getAttributeCode () 
-					);
-				}
-			}
-		}
-		
-		return $data;
-	}
+        $data = array ();
+        $productId = ( int ) $this->getRequest ()->getParam ( 'productid' );
+        $product = Mage::getModel ( "catalog/product" )->load ( $productId );
+        $attributes = $product->getAttributes ();
+        foreach ( $attributes as $attribute ) {
+
+            if ($attribute->getIsVisibleOnFront () && ! in_array ( $attribute->getAttributeCode (), $excludeAttr )) {
+
+                $value = $attribute->getFrontend ()->getValue ( $product );
+                if ($attribute->getFrontendInput () == 'price' && is_string ( $value )) {
+                    $value = Mage::app ()->getStore ()->convertPrice ( $value, true );
+                }
+                if (is_string ( $value ) && strlen ( $value )) {
+                    $data [] = array (
+                            'label' => $attribute->getStoreLabel (),
+                            'value' => $value,
+                            'code' => $attribute->getAttributeCode () 
+                    );
+                }
+            }
+        }
+        
+        return $data;
+    }
 
 	###Getting price range 
 
@@ -595,7 +614,24 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
 	               $product = Mage::getModel ( 'catalog/product' )->load ( $product ['entity_id'] );
 	            	$rating = Mage::getModel('rating/rating')->getEntitySummary($product->getId());
                     $rating_final = ($rating->getSum()/$rating->getCount())/20;
-	            
+	        $productPrice = $product->getPrice();
+            $block = new Mage_Catalog_Block_Product_Price();
+
+            $product_tier_prices = $block->getTierPrices($product);
+            if(count($product_tier_prices) > 0){
+                $product_tier_prices = (object)$product_tier_prices;
+                $tier_prices = '';
+                foreach ($product_tier_prices as $_index => $_price){
+                   
+                    $product_qty = $_price['price_qty'];
+                    $tier_price = number_format($_price['price'], 2, '.' ,'');
+                    $discount =  ceil(100 - ((100 / $productPrice) * $_price['price']));
+                    $symbol = Mage::helper('connector')->getCurrencysymbolByCode($this->currency);
+                    $tier =  'Buy '.$product_qty .' for '.$symbol.$tier_price .' each and save '. $discount .'%';
+
+                $tier_prices .=  '<span>' .$tier.'</span>';
+                }
+            }      
 	          
 	            $productlist [] = array (
                     'entity_id' => $product->getId (),
@@ -607,6 +643,7 @@ class Mss_Connector_ProductsController extends Mage_Core_Controller_Front_Action
                     'special_to_date' => $product->getSpecialToDate (),
                     'image_url' => Mage::helper('connector')-> Imageresize($product->getImage(),'product','300','300'),
                     'url_key' => $product->getProductUrl (),
+                    'tier'=> $tier_prices,
                     'regular_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( $product->getPrice (), $baseCurrency, $currentCurrency ), 2, '.', '' ),
                     'final_price_with_tax' => number_format ( Mage::helper ( 'directory' )->currencyConvert ( 
 							Mage::helper('tax')->getPrice($product, $product->getFinalPrice(), 

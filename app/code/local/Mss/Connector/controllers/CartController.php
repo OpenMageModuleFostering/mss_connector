@@ -863,56 +863,32 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	
 	####get all enabled shipping methods
 	public function getshippingmethodsAction(){ 
+    	$shipMethods = array();
+		$country = $this->getRequest()->getParam('country_id');
 
-		$methods = Mage::getSingleton('shipping/config')->getActiveCarriers();
-		$shipMethods = array();
-		$baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
-		$currentCurrency = $this->currency;
-
-		foreach ($methods as $shippigCode=>$shippingModel) 
-		{
-
-		   if( $carrierMethods = $shippingModel->getAllowedMethods() )
-  		   {
-	       foreach ($carrierMethods as $methodCode => $method)
-	       {
-	            $code= $shippigCode.'_'.$methodCode;
-	  	
-	  
-				if($shippigCode == 'freeshipping'):
-					if(Mage::getStoreConfig('carriers/'.$shippigCode.'/free_shipping_subtotal') < Mage::helper('checkout/cart')->getQuote()->getBaseSubtotalWithDiscount()):
-						$shippingTitle = Mage::getStoreConfig('carriers/'.$shippigCode.'/title');
-					    	$shippingPrice = Mage::getStoreConfig('carriers/'.$shippigCode.'/price');
-					    	$shipMethods[]=array(
-					    				'code'=>$shippigCode.'_'.$shippigCode,
-					    				'value'=>$shippingTitle,
-					    				'price'=>number_format ( Mage::helper ( 'directory' )
-												->currencyConvert ( $shippingPrice, 
-												$baseCurrency, 
-												$currentCurrency ), 2, '.', '' )
-					    		);
-					endif;
-
-				else:
-					$shippingTitle = Mage::getStoreConfig('carriers/'.$shippigCode.'/title');
-				    	$shippingPrice = Mage::getStoreConfig('carriers/'.$shippigCode.'/price');
-				    	$shipMethods[]=array(
-				    				'code'=>$code,
-				    				'value'=>$shippingTitle,
-				    				'price'=>number_format ( Mage::helper ( 'directory' )
-												->currencyConvert ( $shippingPrice, 
-												$baseCurrency, 
-												$currentCurrency ), 2, '.', '' )
-				    		);
+			if (!Zend_Validate::is($$country, 'NotEmpty')):
+					echo json_encode(array('status'=>'error','message'=> $this->__('country id should not be empty')));
+						exit;
 				endif;
-			     }
+		$cart = Mage::getSingleton('checkout/cart');
+		$address = $cart->getQuote()->getShippingAddress();
+		$address->setCountryId($country)
+		        ->setCollectShippingrates(true);
+		$cart->save();
 
-  			 }
-		    
-		    		
+		$rates = $address->collectShippingRates()
+                 ->getGroupedAllShippingRates();
+
+		foreach ($rates as $carrier) {
+		    foreach ($carrier as $rate) {
+
+		    	$shipMethods[] =array('code'=>$rate->getData('code'),
+		    						  'value'=>$rate->getData('carrier_title'),
+		    		                  'price'=>$rate->getData('price')
+					    		);
+		    }
 		}
-		
-		echo json_encode($shipMethods);
+		    echo json_encode($shipMethods);
 	}
 
 	
@@ -1101,8 +1077,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 					$json_shipping1 =   $json_data['1'];
 					$json_shipping = json_decode($json_shipping1,1);
 
-					$paymentmethod = $json_shipping['paymentmethod'];
-					$shipping_method = $json_shipping['shippingmethod'];
+					$paymentmethod = $getParam['paymentmethod'];
+					$shipping_method = $getParam['shippingmethod'];
 					$card_details = $this->getRequest()->getParam('cards_details');
 					$save_cc = $this->getRequest()->getParam('save_cc');
 					if($paymentmethod == 'authorizenet')
@@ -1147,6 +1123,11 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 						    'is_default_billing' =>$json_billing['is_default_billing'],
 
 						);
+						if(isset($json_billing['region'])):
+							$billingAddress['region']=$json_billing['region'];
+						else:
+							$billingAddress['region_id']=$json_billing['region_id'];
+						endif;
 						$shippingAddress = array(
 						    'firstname' => $json_shipping['firstname'],
 						    'lastname' => $json_shipping['lastname'],
@@ -1168,10 +1149,11 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 					       'is_default_shipping' =>$json_shipping['is_default_shipping'],
 						    'is_default_billing' =>$json_shipping['is_default_billing'],
 						);
-						/*if(isset($data['region']))
-							$billingAddress['region']=$getParams['region'];
-						else
-							$billingAddress['region_id']=$getParams['region_id'];*/
+						if(isset($json_shipping['region'])):
+							$shippingAddress['region']=$json_shipping['region'];
+						else:
+							$shippingAddress['region_id']=$json_shipping['region_id'];
+						endif;
 						
 						$quote->getBillingAddress()
 						        ->addData($billingAddress);

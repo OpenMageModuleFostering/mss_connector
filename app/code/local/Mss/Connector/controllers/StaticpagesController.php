@@ -44,6 +44,8 @@ class Mss_Connector_StaticpagesController extends Mage_Core_Controller_Front_Act
 							);
 			$data = array();
 
+			$helper = Mage::helper('cms');
+        	$processor = $helper->getPageTemplateProcessor();
 			foreach($pages as $page):
 
 				if($page):
@@ -51,7 +53,7 @@ class Mss_Connector_StaticpagesController extends Mage_Core_Controller_Front_Act
 					$page_model = Mage::getModel('cms/page')->load($identifier, 'identifier');
 					
 					$data [] = array('page_title'=>$page_model->getTitle(),
-								'page_content'=>$page_model->getContent());
+								'page_content'=>$processor->filter($page_model->getContent()));
 				endif;
 			endforeach;
 			
@@ -67,10 +69,7 @@ class Mss_Connector_StaticpagesController extends Mage_Core_Controller_Front_Act
 
 			echo json_encode(array('status'=>'error','message'=> $this->__('Problem in loading data.')));
 			exit;
-
 		}
-
-
 	}
 
 }
