@@ -30,5 +30,12 @@ class Mss_Connector_Adminhtml_SupportController extends Mage_Adminhtml_Controlle
 		}
 		return  $msg;
 	}
+		public function landingAction() {    
+  	
+  	    $this->loadLayout();
+  	    $this->_title($this->__("Verification"));
+		$this->renderLayout();
+  	}
+
 }
 
