@@ -33,9 +33,30 @@ class Mss_Connector_Model_Observer
 	
 		}
 		$current = Mage::getStoreConfig('magentomobileshop/secure/key');
-		if((!$current)  AND $adminsession->isLoggedIn() AND $mssAppData != '' ) { 
-			
+		$array = array();
+		$third_party = array();
+		foreach(Mage::getConfig()->getNode('modules')->children() as $item){
 
+			    $name = $item->getName();
+			        if(strrpos($name,"Mage_") === false ):
+			        (array_push($third_party,$name));
+			        endif;   
+			}
+		$payments = Mage::getSingleton('payment/config')->getActiveMethods();
+		$payMethods = array();
+			foreach ($payments as $paymentCode=>$paymentModel) 
+			{
+			    $paymentTitle = Mage::getStoreConfig('payment/'.$paymentCode.'/title');
+			    $payMethods[$paymentCode] = $paymentTitle;
+			}
+		$methods = Mage::getSingleton('shipping/config')->getActiveCarriers();
+		$shipMethods = array();
+			foreach ($methods as $shippigCode=>$shippingModel) 
+			{
+			    $shippingTitle = Mage::getStoreConfig('carriers/'.$shippigCode.'/title');
+			    $shipMethods[$shippigCode] = $shippingTitle;
+			}		
+		if((!$current)  AND $adminsession->isLoggedIn() AND $mssAppData != '' ) { 
 				
            	$str = self::ACTIVATION_URL;
 			$url = $str.'?mms_id=';
@@ -48,37 +69,22 @@ class Mss_Connector_Model_Observer
 			$lang = explode("_",$locale);
 
 	    	$mssData = array();
-	    	//$mssData[0]['final_url'] = $final_url;
 	    	$mssData[0]['mms_id'] = base64_encode($mssAppData);
 			$mssData[0]['default_store_name'] = Mage::app()->getDefaultStoreView()->getCode();
 			$mssData[0]['default_store_id'] = Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId();
 			$mssData[0]['default_view_id'] = Mage::app()->getDefaultStoreView()->getId();
 			$mssData[0]['default_store_currency'] = Mage::app()->getStore()->getCurrentCurrencyCode();
 			$mssData[0]['language'] = $lang[0];
-			//$mssData[0]['version']  = Mage::getConfig()->getModuleConfig("Mss_Connector")->version;
 			$mssData[0]['status'] = 'true';
-
+			$mssData[0]['Installed Active Extensions'] = $third_party;
+			$mssData[0]['Active Payment Methods'] = $payMethods;
+			$mssData[0]['Active Shipping Methods'] = $shipMethods;
+		
 			Mage::app()->getCacheInstance()->cleanType('config');
 			Mage::getSingleton('core/session')->setAppDatas($mssData[0]);
-			//Mage::unregister('mms_app_data');
-
-/*			$fields_string='';
-			foreach($mssData as $key=>$value) { $fields_string .= $key.'='.$value.'&'; }
-			rtrim($fields_string,'&');
-
-			$ch = curl_init();
-			curl_setopt($ch,CURLOPT_URL,$final_urls);
-			curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
-			curl_setopt($ch,CURLOPT_POST,count($mssData));
-			curl_setopt($ch,CURLOPT_POSTFIELDS,$fields_string);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-			$result = curl_exec($ch); 
-			curl_close($ch);*/
 			Mage::app()->getResponse()->setRedirect(Mage::helper("adminhtml")->getUrl("connector/adminhtml_support/landing/"))->sendResponse();
 		    	exit;
 		} elseif($current != ''  AND $adminsession->isLoggedIn() AND $decode != '') { 
-
-		
 
 			$str = self::ACTIVATION_URL;
 			$url = $str.'?mms_id=';
@@ -90,15 +96,16 @@ class Mss_Connector_Model_Observer
 			$locale = Mage::app()->getLocale()->getLocaleCode();
 			$lang = explode("_",$locale);
 
-	    	//$mssData[0]['final_url'] = $final_url;
 	    	$mssData[0]['mms_id'] = base64_encode($mssAppData);
 			$mssData[0]['default_store_name'] = Mage::app()->getDefaultStoreView()->getCode();
 			$mssData[0]['default_store_id'] = Mage::app()->getWebsite(true)->getDefaultGroup()->getDefaultStoreId();
 			$mssData[0]['default_view_id'] = Mage::app()->getDefaultStoreView()->getId();
 			$mssData[0]['default_store_currency'] = Mage::app()->getStore()->getCurrentCurrencyCode();
 			$mssData[0]['language'] = $lang[0];
-			//$mssData[0]['version']  = Mage::getConfig()->getModuleConfig("Mss_Connector")->version;
 			$mssData[0]['status'] = 'true';
+			$mssData[0]['Installed Active Extensions'] = $third_party;
+			$mssData[0]['Active Payment Methods'] = $payMethods;
+			$mssData[0]['Active Shipping Methods'] = $shipMethods;
 
 			Mage::app()->getCacheInstance()->cleanType('config');
 			Mage::getSingleton('core/session')->setAppDatas($mssData[0]);
