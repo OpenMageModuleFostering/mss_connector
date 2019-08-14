@@ -4,6 +4,7 @@ class Mss_Connector_Model_Observer
 	const XML_SECURE_KEY = 'magentomobileshop/secure/key';
 	const ACTIVATION_URL = 'https://www.magentomobileshop.com/user/mss_verifiy';
 	const TRNS_EMAIL = 'trans_email/ident_general/email';
+	
 
 	public function notificationMessage()
 	{
@@ -73,8 +74,8 @@ class Mss_Connector_Model_Observer
 
 		}
 		if(!Mage::getStoreConfig(self::XML_SECURE_KEY) AND $adminsession->isLoggedIn()):
-
-    	$href = self::ACTIVATION_URL.'?email='.Mage::getStoreConfig(self::TRNS_EMAIL).'&url='.Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB);
+			$static_url  = 'https://www.magentomobileshop.com/user/mobile-connect';
+    	$href = $static_url.'?email='.Mage::getStoreConfig(self::TRNS_EMAIL).'&url='.Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB);
     	
     	Mage::getSingleton('core/session')->addError('Magentomobileshop extension is not activated yet, <a href="'.$href.'" target="_blank">Click here</a> to activate your extension.');
         endif;
