@@ -54,15 +54,17 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 		$customerinfo = array ();
 
-		if (Mage::getSingleton ( 'customer/session' )->isLoggedIn()) {
-			$customer = Mage::getSingleton ( 'customer/session' )->getCustomer ();
+		if (Mage::getSingleton ( 'customer/session' )->isLoggedIn()) {			
+			$customer = Mage::getSingleton ( 'customer/session' )->getCustomer ();	
 			$storeUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA); 
 			
+
 			$customerinfo = array (
 					'id'=>$customer->getId(),
 					'name' => $customer->getFirstname () .' '.$customer->getLastname (),
 					'email' => $customer->getEmail (),
 					);
+			
 				
 			return $customerinfo;
 		} else	return false;
@@ -76,12 +78,15 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 			
 		$session = Mage::getSingleton ( 'customer/session' );
-		if (Mage::getSingleton ( 'customer/session' )->isLoggedIn ()) {
+
+		if (Mage::getSingleton ( 'customer/session' )->isLoggedIn ()) {			 
 			$session->logout ();
 		}
 		$username = Mage::app ()->getRequest ()->getParam ( 'username' );
-		 $password = Mage::app ()->getRequest ()->getParam ( 'password' );
-		 
+		$password = Mage::app ()->getRequest ()->getParam ( 'password' );
+		
+		//Mage::log(print_r($username, true),null,'cust.log');
+			 
 		try {
 			if (!$session->login ( $username, $password )) {
 				echo json_encode(array('status' => 'error','message'=> $this->__('wrong username or password.')));
@@ -396,7 +401,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
  		$id=(int)$this->getRequest()->getParam('addressid');
  		
  		
- 			$address=Mage::getModel('customer/address')->load($id);
+ 			$address=Mage::getModel('customer/address')->load($id);			
 			
  			if($address->getId()):
 
@@ -449,7 +454,8 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				#loop to create the array
 				foreach ($customer->getAddresses() as $address)
 				{
-				   $customerAddress[] =array(
+
+				    $address_array = array(
 
 				   		'id'=>$address->getId(),
 				   		'firstname'=>$address->getFirstname(),
@@ -457,8 +463,10 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 				   		'street'=>$address->getStreet1().''.$address->getStreet2(),
 				   		'city'=>$address->getCity(),
 				   		// 'country_id'=>$address->getCountryId(),
-				   			'country_id'=>Mage::getModel('directory/country')->loadByCode($address->getCountryId())->getName(),
-				   		'region'=>$address->getRegion(),
+			   			'country_name'=>Mage::getModel('directory/country')->loadByCode($address->getCountryId())->getName(),
+			   			'country_id'=>$address->getCountryId(),
+
+				   		//'region'=>$address->getRegion(),
 				   		'postcode'=>$address->getPostcode(),
 				   		'telephone'=>$address->getTelephone(),
 				   		'fax'=>$address->getFax(),
@@ -466,6 +474,17 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 
 				   );
+				   
+				   if ($address->getRegionId()) {
+				   		 $address_array['region_id'] = $address->getRegionId();
+				   		 $address_array['region'] = Mage::getModel('directory/region')->load($address->getRegionId())->getName();
+				   		 
+				   } else {
+				   		 $address_array['region'] = $address->getRegion();
+				   }
+
+
+				   	$customerAddress[] = $address_array;
 				}
 				
 				echo json_encode($customerAddress);
@@ -626,7 +645,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 
 	                        }
 
-                $items = $order->getAllItems(); 
+                $items = $order->getAllVisibleItems(); 
                 $itemcount=count($items);
                 $name=array();
                 $unitPrice=array();
@@ -650,7 +669,7 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
                      $sku=$item->getSku();
                      $ids=$item->getProductId();
                      //$qty[]=$item->getQtyToInvoice();
-                     $qty= $item->getQtyOrdered();
+                     $qty= (int)$item->getQtyOrdered();
                      $products = Mage::getModel('catalog/product')->load($item->getProductId());
                      $images= Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB).'/media/catalog/product'.$products->getThumbnail();
                		 
@@ -658,17 +677,18 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 		                     "name" => $name,
 		                     "sku" => $sku,
 		                     "id" => $ids,
-		                     "quantity" => $qty,
+		                     "quantity" => (int)$qty,
 		                     "unitprice" => $unitPrice,
 		                     "image" => $images,
 		                     "total_item_count" => $itemcount,
 		                     "price_org" =>  $test_p,
 		                     "price_based_curr" => 1,
 		                );
+               		
 
                 }  # item foreach close
                
-              
+              Mage::log(print_r( $productlist, true),null,'cust.log');
                
                 $order_date = $order->getCreatedAtStoreDate().'';
                 $orderData = array(
@@ -686,14 +706,14 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
                      "products" => $productlist,
                      "order_currency" => $order->getOrderCurrencyCode(),
                      "order_currency_symbol" => Mage::app()->getLocale()->currency($order->getOrderCurrencyCode())->getSymbol(),
-                     "currency" => $currency,
+                     "currency" => $this->currency,
                      "couponUsed" => 0
                 );
                 $couponCode = $order->getCouponCode();
                 if($couponCode!="") {					
 					$orderData["couponUsed"] =  1;
 					$orderData["couponCode"] =  $couponCode;
-				    $orderData["discount_amount"] =  floatval(number_format($this->convert_currency(floatval($order->getDiscountAmount()),$basecurrencycode,$currency), 2, '.', ''))*-1;
+				    $orderData["discount_amount"] =  floatval(number_format($this->convert_currency(floatval($order->getDiscountAmount()),$basecurrencycode,$this->currency), 2, '.', ''))*-1;
 				}
 				
 				$res["data"][] = $orderData;
@@ -726,7 +746,8 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			
 			if(Mage::getSingleton('customer/session')->isLoggedIn()):		 
 			    $info=array();
-			    $customer = Mage::getSingleton('customer/session')->getCustomer();			   
+			    $customer = Mage::getSingleton('customer/session')->getCustomer();
+
 			    $info['firstname'] =  $customer->getFirstname(); 		  
 			    $info['lastname'] = $customer->getLastname();
 			    $customerAddressId =$customer->getDefaultBilling(); 
@@ -849,6 +870,10 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 	 		$addressId = $this->getRequest ()->getParam ('addressId');
 	 		$addressData = json_decode($this->getRequest ()->getParam ('addressData'),1);
 
+	 		if (!array_key_exists('region_id', $addressData)) {
+				$addressData['region_id'] = '';	 			
+	 		}
+	 		
 	 		$customer = Mage::getModel('customer/customer')->load(Mage::getSingleton ( 'customer/session' )->getCustomer()->getId());
 	 		$customer->setFirstname($addressData['firstname']); 
 		    $customer->setLastname ($addressData['lastname']); 
@@ -936,6 +961,38 @@ class Mss_Connector_CustomerController extends Mage_Core_Controller_Front_Action
 			exit;
 		endif;
 
+
+	 }
+
+	 /*Delete Address API*/
+
+	 /*
+	 URL : baseurl/restapi/customer/deleteAddress
+	 Name : deleteAddress
+	 Method : GET
+	 Required fields : addressId*
+	 Response : JSON
+
+	*/
+
+	 public function deleteAddressAction()
+	 {
+	 	$customer = Mage::getSingleton ( 'customer/session' );
+	 	$addressId = $this->getRequest ()->getParam ('addressId');
+	 	if (!$addressId) {
+	 		echo  json_encode(array('status'=>'error','message'=>'Address Id is missing.'));
+			exit;
+	 	}
+	 	if ($customer->isLoggedIn()) {
+			$address = Mage::getModel('customer/address')->load($addressId);
+			$address->delete();
+			echo  json_encode(array('status'=>'success','message'=>'Request complete.'));
+			exit;
+
+		} else {
+			echo  json_encode(array('status'=>'error','message'=>'Login first.'));
+			exit;
+		}
 
 	 }
 

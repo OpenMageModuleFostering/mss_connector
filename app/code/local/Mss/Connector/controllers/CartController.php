@@ -22,7 +22,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		$this->viewId = Mage::app()->getFrontController()->getRequest()->getHeader('viewId');
 		$this->currency = Mage::app()->getFrontController()->getRequest()->getHeader('currency');
 		
-		Mage::app()->setCurrentStore($this->storeId);
+		Mage::app()->setCurrentStore(Mage::app()->getStore($this->viewId));
 		
 		parent::_construct();
 		
@@ -407,7 +407,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			  {
 					  echo json_encode ( array (
 							'status' => 'error',
-							'message' => $this->__("Coupan Is not Valid" ) 
+							'message' => $this->__("Coupon code  Is not Valid" ) 
 					  ));
 					return false;
 			  }
@@ -481,47 +481,59 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	 	$addressId = $this->getRequest()->getParam('address_id');
 	 	$countryId = $this->getRequest()->getParam('country_id');
 	 	$setRegionId = $this->getRequest()->getParam('region_id');
-		if (isset($addressId)){
-			$customer = Mage::getModel('customer/address')
-		    ->load($addressId);
-		    $countryId = $customer['country_id'];
-		    $setRegionId = $customer['region_id'];
-		    $regionName = $customer['region'];
-	        $quote=Mage::getSingleton ( 'checkout/cart' )->getQuote();
-	        if (isset($setRegionId)){
-	        $quote->getShippingAddress()
-	              ->setCountryId($countryId)
-	              ->setRegionId($setRegionId)
-	              ->setCollectShippingRates(true);
-	        } else {
-			$quote->getShippingAddress()
-	              ->setCountryId($countryId)
-	              ->setRegion($regionName)
-	              ->setCollectShippingRates(true);	        	
-	        }
-	        $quote->save();
-	        $quote->getShippingAddress()->setShippingMethod('flatrate_flatrate')->save();
-	        $amount=$quote->getShippingAddress();
-	        $shipping_amount = $amount['shipping_incl_tax'];
-	        return  $shipping_amount;
-        } else {
-        	$quote=Mage::getSingleton ( 'checkout/cart' )->getQuote();
-        	if (isset($setRegionId)){
-	        $quote->getShippingAddress()
-	              ->setCountryId($countryId)
-	              ->setRegionId($setRegionId)
-	              ->setCollectShippingRates(true);
+	 	$shipping_method = $this->getRequest()->getParam('shippingmethod');
+			if (isset($addressId)){
+				$customer = Mage::getModel('customer/address')
+			    ->load($addressId);
+			    $countryId = $customer['country_id'];
+			    $setRegionId = $customer['region_id'];
+			    $regionName = $customer['region'];
+		        $quote=Mage::getSingleton ( 'checkout/cart' )->getQuote();
+
+		        $shippingCheck = $quote->getShippingAddress()->getData();
+		        if($shippingCheck['shipping_method'] != $shipping_method) {
+		        	if (isset($setRegionId)){
+			        	$quote->getShippingAddress()
+			              ->setCountryId($countryId)
+			              ->setRegionId($setRegionId)
+			              ->setCollectShippingRates(true);
+			        } else {
+					$quote->getShippingAddress()
+			              ->setCountryId($countryId)
+			              ->setRegion($regionName)
+			              ->setCollectShippingRates(true);	        	
+			        }
+			        $quote->save();
+			        $quote->getShippingAddress()->setShippingMethod($shipping_method.'_'.$shipping_method)->save();
+		        }
+        
+		        $quote->collectTotals ()->save ();
+		        $amount=$quote->getShippingAddress()->getData();
+		        $shipping_amount = $amount['shipping_incl_tax'];
+		        return  $shipping_amount;
 	        } else {  
-	        $quote->getShippingAddress()
-	              ->setCountryId($countryId)
-	              ->setCollectShippingRates(true);	
+	        	$quote=Mage::getSingleton ( 'checkout/cart' )->getQuote();
+	        	$shippingCheck = $quote->getShippingAddress()->getData();
+
+			    if($shippingCheck['shipping_method'] != $shipping_method) {
+		        	if (isset($setRegionId)){
+			        	$quote->getShippingAddress()
+			              ->setCountryId($countryId)
+			              ->setRegionId($setRegionId)
+			              ->setCollectShippingRates(true);
+			        } else {  
+			        $quote->getShippingAddress()
+			              ->setCountryId($countryId)
+			              ->setCollectShippingRates(true);	
+			        }
+			        $quote->save();
+			        $quote->getShippingAddress()->setShippingMethod($shipping_method.'_'.$shipping_method)->save();
+		    	}
+		        $quote->collectTotals ()->save ();
+		        $amount=$quote->getShippingAddress();
+		        $shipping_amount = $amount['shipping_incl_tax'];
+		        return $shipping_amount;
 	        }
-	        $quote->save();
-	        $quote->getShippingAddress()->setShippingMethod('flatrate_flatrate')->save();
-	        $amount=$quote->getShippingAddress();
-	        $shipping_amount = $amount['shipping_incl_tax'];
-	        return $shipping_amount;
-        }
 	}
 
 	protected function _getCartInformation() {
@@ -893,23 +905,20 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 					
 
 					$session = Mage::getSingleton ( 'customer/session' );
-					$customerId=$session->getId();
-
-					
+					$customerId=$session->getId();					
 					
 					##Get current quote 
 					$totalItems = Mage::helper('checkout/cart')->getSummaryCount();
 				
 					if($totalItems > 0):
-							#get the addressid
+							#get the addressid						
+						
 							$addressId=(int)$this->getRequest()->getParam('addressid');
 							$shipping_method=$this->getRequest()->getParam('shippingmethod'); 
 							$paymentmethod=$this->getRequest()->getParam('paymentmethod');
 							$registration_id = $this->getRequest()->getParam('registration_id');
 							$card_details = $this->getRequest()->getParam('cards_details');
 							$save_cc = $this->getRequest()->getParam('save_cc');
-
-
 
 							if($paymentmethod == 'authorizenet')
 								$this->validateCarddtails(json_decode($card_details,1));
@@ -991,6 +1000,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 
 								 $result=array(	'message'=>$this->__('Order placed successfully.'),
 								 				'orderid'=>$order->getIncrementId(),
+															'result'=>'success',
 															'result'=>'success'
 
 													);
@@ -1282,6 +1292,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		public function getcheckoutcartAction(){
 			 $customerId =(int)$this->getRequest()->getParam('customerid');
 
+
        if ($customerId) { 
         
           $customer = Mage::getModel('customer/customer')->load($customerId); 
@@ -1289,7 +1300,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
           $cart = Mage::getModel('sales/quote') ->loadByCustomer($customer);
               
               if(!count($cart->getAllItems())):
-                echo json_encode(array('status'=>'success','message'=> $this->__($product)));
+                echo json_encode(array('status'=>'success','message'=> $product));
                 exit;
               endif;
               $product_model = Mage::getModel ( 'catalog/product' );
@@ -1297,8 +1308,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
             $baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();
 			$currentCurrency = $this->currency;
 
-                foreach ($cart->getAllVisibleItems() as $item) {
-
+                foreach ($cart->getAllVisibleItems() as $item) {        
                   $productName= array();
                   $productName['cart_item_id'] = $item->getId();
                   $productName['id'] = $item->getProductId();
@@ -1327,12 +1337,12 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
               $product['totalitems'] = $cart->getItemsCount();
             $product['symbol'] = Mage::helper('connector')->getCurrencysymbolByCode($this->currency);
               
-              echo json_encode(array('status'=>'success','message'=> $this->__($product)));
+              echo json_encode(array('status'=>'success','message'=> $product));
 
               }
             catch(exception $e)
             {
-              echo json_encode(array('status'=>'error','message'=> $this->__($e->getMessage())));
+              echo json_encode(array('status'=>'error','message'=> $e->getMessage()));
             } 
           }
           else {
@@ -1348,6 +1358,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 					$items = $quote->getAllVisibleItems ();
 					$cartItemArr='';
 					foreach ( $items as $item ){
+
 					  $productName= array();
 	                  $productName['cart_item_id'] = $item->getId();
 	                  $productName['id'] = $item->getProductId();

@@ -139,6 +139,7 @@ class Mss_Connector_StoreinfoController extends Mage_Core_Controller_Front_Actio
 	public function getCurrentCurrencyAction() {
 		
 		$codes = Mage::app()->getStore()->getAvailableCurrencyCodes(true);
+		$currencies = array();
 
             if (is_array($codes) && count($codes) > 1):
                 $rates = Mage::getModel('directory/currency')->getCurrencyRates(
