@@ -121,42 +121,26 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	public function updateCartAction()
 	{
 		
-		$cart_data = json_decode($this->getRequest ()->getParam('cart_data'),1);
+		$id = $this->getRequest ()->getParam('cart_data');
 	
+		$cart = Mage::getSingleton ( 'checkout/cart' );
 
-		foreach($cart_data as $itemId => $qty):
-			
-			$itemId=(int)$itemId;
-			$qty = (int)$qty;
-			$oldQty = 0;
-			$item = null;
-
+		if ($id):
 			try {
-				if ($itemId):
-					$cartData = array ();
-							
-					$cartHelper = Mage::helper('checkout/cart');
-					$items = $cartHelper->getCart()->getItems();
-
-					foreach($items as $item):
-						if($item->getProduct()->getId() == $itemId):
-							$itemId = $item->getItemId();
-							$cartHelper->getCart()->removeItem($itemId)->save();
-							break;
-						endif;
-					endforeach;
-
-				endif;
-
+				$cart->removeItem ( $id )->save ();
+				echo json_encode(array("status"=>"success"));
+			} catch ( Mage_Core_Exception $e ) {
+				echo json_encode ( array ("status" =>"error","message"=>$e->getMessage ()));
 				
-			} 
-			catch ( Mage_Core_Exception $e ) {
-				echo json_encode (array('status'=>'error','message'=> $e->getMessage ()) );
-				exit;
-			} 
-		endforeach;
-		echo json_encode(array('status'=>'success','message'=> 'true'));
-		exit;
+			} catch ( Exception $e ) {
+				echo json_encode ( array ("status" =>"error","message"=>$e->getMessage ()));
+				
+			}
+		else:
+			echo json_encode(array ("status" =>"error","message"=>"Param cart_item_id is empty."));
+			exit;
+		endif;
+
 	}
 	public function clearcartAction()
 	{
@@ -228,15 +212,27 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 				$cart->addProduct ( $product, $params );
 			endif;
 
-			
+
 			$session->setLastAddedProductId ( $product->getId () );
 			$session->setCartWasUpdated ( true );
 			$cart->save ();
 
 
-			$items_qty = floor ( Mage::getModel ( 'checkout/cart' )->getQuote ()->getItemsQty () );
+			$cart = Mage::getSingleton ( 'checkout/cart' );
+			$quote = $cart->getQuote ();
+
+			/*get last inserted cart ID*/
+			$items = $quote->getAllVisibleItems ();
+			$cartItemArr='';
+			foreach ( $items as $item )
+				$cartItemArr= $item->getId ();
+			
+			
+
+			$items_qty = floor ( $quote->getItemsQty () );
 			$result = '{"result":"success"';
-			$result .= ', "items_qty": "' . $items_qty . '"}';
+			$result .= ', "items_qty": "' . $items_qty . '"';
+			$result .= ', "cart_item_id": "' . $cartItemArr . '"}';
 			echo $result;
 		} catch ( Exception $e ) {
 
@@ -1220,11 +1216,10 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
                 exit;
               endif;
               $product_model = Mage::getModel ( 'catalog/product' );
-              foreach ($cart->getAllItems() as $item) {
-
-                  
+              foreach ($cart->getAllVisibleItems() as $item) {
 
                   $productName= array();
+                  $productName['cart_item_id'] = $item->getId();
                   $productName['id'] = $item->getProductId();
                   $productName['sku'] = $item->getSku();
                   $productName['qty'] = $item->getQty();              
@@ -1238,7 +1233,8 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
                   	$productName['configurable'] = $this->_getConfigurableOptions( $item );
 
                   if($product_model->load($item->getProductId())->getData('has_options'))
-                  	$productName['custom_option'] = $this->_getCustomOption( $item );
+                  	($this->_getCustomOption( $item ))?$productName['custom_option'] = $this->_getCustomOption( $item ):'';
+                  		
 
                   $product['product'][] = $productName;
                   

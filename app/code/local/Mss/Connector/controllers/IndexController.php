@@ -224,7 +224,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 				$collection=$collection->addAttributeToSort ( $order, $dir )/* ->setPage ( $page, $limit ) */;
 				$pages = $collection->setPageSize ( $limit )->getLastPageNumber ();
 				 $count=$collection->getSize();
-
+				
 				if(!$count):
 					
 					echo json_encode(array('status'=>'error','message'=>'No Record Found'));

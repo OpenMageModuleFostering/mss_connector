@@ -19,8 +19,8 @@ class Mss_Connector_Model_Observer
 
         $configValue = Mage::getStoreConfig('mss/connector/email');
         
-		if($configValue =='' AND $adminsession->isLoggedIn())
-			$this->sendemail();
+		//if($configValue =='' AND $adminsession->isLoggedIn())
+			//$this->sendemail();
 
 
      	
