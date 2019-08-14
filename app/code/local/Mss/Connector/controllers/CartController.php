@@ -530,13 +530,15 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 	 	$addressId = $this->getRequest()->getParam('address_id');
 	 	$countryId = $this->getRequest()->getParam('country_id');
 	 	$setRegionId = $this->getRequest()->getParam('region_id');
+	 	$zipcode = $this->getRequest()->getParam('zipcode');
 	 	$shipping_method = $this->getRequest()->getParam('shippingmethod');
 			if (isset($addressId)){
 				$customer = Mage::getModel('customer/address')
 			    ->load($addressId);
-			    $countryId = $customer['country_id'];
+			    $countryId   = $customer['country_id'];
 			    $setRegionId = $customer['region_id'];
-			    $regionName = $customer['region'];
+			    $regionName  = $customer['region'];
+			    $zipcode     = $customer['zipcode'];
 		        $quote=Mage::getSingleton ( 'checkout/cart' )->getQuote();
 
 		        $shippingCheck = $quote->getShippingAddress()->getData();
@@ -545,11 +547,13 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			        	$quote->getShippingAddress()
 			              ->setCountryId($countryId)
 			              ->setRegionId($setRegionId)
+			              ->setPostcode($zipcode)
 			              ->setCollectShippingRates(true);
 			        } else {
 					$quote->getShippingAddress()
 			              ->setCountryId($countryId)
 			              ->setRegion($regionName)
+			              ->setPostcode($zipcode)
 			              ->setCollectShippingRates(true);	        	
 			        }
 			        $quote->save();
@@ -569,10 +573,12 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			        	$quote->getShippingAddress()
 			              ->setCountryId($countryId)
 			              ->setRegionId($setRegionId)
+			              ->setPostcode($zipcode)
 			              ->setCollectShippingRates(true);
 			        } else {  
 			        $quote->getShippingAddress()
 			              ->setCountryId($countryId)
+			              ->setPostcode($zipcode)
 			              ->setCollectShippingRates(true);	
 			        }
 			        $quote->save();
@@ -594,6 +600,7 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 			$cart->save ();
 		}
 	 	$cart->getQuote ()->collectTotals ()->save ();
+	 	$totals = Mage::getSingleton ( 'checkout/session' )->getQuote ()->getTotals ();
 		$cartInfo = array ();
 		$cartInfo ['is_virtual'] = Mage::helper ( 'checkout/cart' )->getIsVirtualQuote ();
 		$cartInfo ['cart_items'] = $this->_getCartItems ();
@@ -603,6 +610,16 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
 		$cartInfo ['sub_total'] = number_format ( $cart->getQuote()->getSubtotal(), 2, '.', '' );
 		$cartInfo ['allow_guest_checkout'] = Mage::helper ( 'checkout' )->isAllowedGuestCheckout ( $cart->getQuote () );
 		$cartInfo ['shipping_amount'] = $shipping_amount;
+		if (isset ( $totals ['discount'] )) { // $totals['discount']->getValue()) {
+			$cartInfo['discount'] = number_format ( $totals ['discount']->getValue (), 2, '.', '' ); // Discount value if applied
+		} else {
+			$cartInfo['discount'] = '0.00';
+		}
+		if (isset ( $totals ['tax'] )) { // $totals['tax']->getValue()) {
+			$cartInfo['tax'] = number_format ( $totals ['tax']->getValue (), 2, '.', '' ); // Tax value if present
+		} else {
+			$cartInfo['tax'] = '0.00';
+		}
 		
 		return $cartInfo;
 	}
@@ -1394,10 +1411,13 @@ class Mss_Connector_CartController extends Mage_Core_Controller_Front_Action {
           try{
           $cart = Mage::getModel('sales/quote') ->loadByCustomer($customer);
               
-              if(!count($cart->getAllItems())):
-                echo json_encode(array('status'=>'success','message'=>$product));
-                exit;
-              endif;
+            if(!count($cart->getAllItems())):
+              	  $cart = Mage::getModel('checkout/cart')->getQuote();
+        			if(!count($cart->getAllItems())):
+		                echo json_encode(array('status'=>'success','message'=>$product));
+		                exit;
+		            endif;
+            endif;
               $product_model = Mage::getModel ( 'catalog/product' );
 
             $baseCurrency = Mage::app ()->getStore ()->getBaseCurrency ()->getCode ();

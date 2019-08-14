@@ -210,9 +210,9 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 							if($key == 'price'):
 								
 								$price = explode(',',$filter[0]);
-								$price_filter = array('gt'=>$price['0'],'lt'=>$price['1']);
-								/*$collection = $collection->addAttributeToFilter ( 'price', array ('gt' => $price['0'] ) );
-								$collection = $collection->addAttributeToFilter ( 'price', array ('lt' => $price['1']) );*/
+								$price_filter = array('0'=>$price['0'],'1'=>$price['1']);
+							    $collection = $collection->addAttributeToFilter ( 'price', array ('gt' => $price['0'] ) );
+								$collection = $collection->addAttributeToFilter ( 'price', array ('lt' => $price['1']) );
 							else:
 								$collection = $collection->addAttributeToFilter ( $key, array('in' => $filter) );
 							endif;
@@ -513,7 +513,7 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 
 			if(sizeof($price_filter)):
 
-				if($product->getFinalPrice() > $price_filter['0'] AND $product->getFinalPrice() > $price_filter['1']):
+				if($product->getFinalPrice() > $price_filter['0'] AND $product->getFinalPrice() < $price_filter['1']):
 				
 					$productlist [] = array (
 						'entity_id' => $product->getId (),
