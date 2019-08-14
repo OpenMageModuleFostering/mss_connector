@@ -219,8 +219,8 @@ class Mss_Connector_IndexController extends Mage_Core_Controller_Front_Action {
 								$price_filter = array('0'=>$price['0'],'1'=>$price['1']);
 							   	$collection->addFinalPrice();
 
-								$collection->addPriceDataFieldFilter('%s <= %s', ['final_price', $price['0']]);
-								$collection->addPriceDataFieldFilter('%s >= %s', ['final_price', $price['1']]);
+								$collection->addPriceDataFieldFilter('%s <= %s', array('final_price', $price['0']));
+								$collection->addPriceDataFieldFilter('%s >= %s', array('final_price', $price['1']));
 							else:
 							    $tableAlias = $key . '_idx';
 						        $attributeModel = Mage::getModel('eav/entity_attribute')->getCollection()->addFieldToFilter('attribute_code', $key );
