@@ -1,16 +1,19 @@
 {
-    "name": "OpenMageModuleFostering/Mss_Connector",
+    "name": "OpenMageModuleFostering\/Mss_Connector",
     "type": "magento-module",
     "license": "OSL-v1.0",
     "homepage": "",
     "description": "Mobile Multi store app for Android and Iphone",
     "authors": [
-    {
-        "name": "mss",
-        "email": "mss.yogendra@gmail.com"
-    }
-],
+        {
+            "name": "mss",
+            "email": "mss.yogendra@gmail.com"
+        }
+    ],
     "suggest": {
-        "magento-hackathon/magento-composer-installer": "*"
-    }
+        "magento-hackathon\/magento-composer-installer": "*"
+    },
+    "keywords": [
+        "openmage-module"
+    ]
 }
